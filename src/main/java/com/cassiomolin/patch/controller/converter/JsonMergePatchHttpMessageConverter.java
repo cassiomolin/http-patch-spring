@@ -14,6 +14,11 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import java.io.IOException;
 
+/**
+ * HTTP message converter for {@link JsonMergePatch}.
+ * <p>
+ * Only supports {@code application/merge-patch+json} media type.
+ */
 @Component
 public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConverter<JsonMergePatch> {
 

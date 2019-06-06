@@ -26,7 +26,7 @@ public class BookController {
     /**
      * Retrieve a representation of all books.
      *
-     * @return
+     * @return HTTP response with the 200 status code with the operation completed successfully
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Book>> findBooks() {
@@ -38,7 +38,7 @@ public class BookController {
      * Retrieve a representation of the book with the given id.
      *
      * @param id book identifier
-     * @return
+     * @return HTTP response with the 200 status code if the operation completed successfully
      */
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Book> findBook(@PathVariable Long id) {
@@ -51,7 +51,7 @@ public class BookController {
      *
      * @param id            book identifier
      * @param patchDocument JSON Patch document
-     * @return
+     * @return HTTP response with the 204 status code if the operation completed successfully
      */
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_JSON_PATCH_VALUE)
     public ResponseEntity<Book> patchBook(@PathVariable Long id,
@@ -68,7 +68,7 @@ public class BookController {
      *
      * @param id                 book identifier
      * @param mergePatchDocument JSON Merge Patch document
-     * @return
+     * @return HTTP response with the 204 status code if the operation completed successfully
      */
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_MERGE_PATCH_VALUE)
     public ResponseEntity<Book> mergePatchBook(@PathVariable Long id,
