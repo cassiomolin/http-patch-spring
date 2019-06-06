@@ -42,7 +42,7 @@ public class BookController {
         Book book = service.findBook(id).orElseThrow(ResourceNotFoundException::new);
         Book patched = patchHelper.patch(patchDocument, book, Book.class);
         service.updateBook(patched);
-        return ResponseEntity.ok(patchDocument);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_MERGE_PATCH_VALUE)
@@ -52,6 +52,6 @@ public class BookController {
         Book book = service.findBook(id).orElseThrow(ResourceNotFoundException::new);
         Book patched = patchHelper.mergePatch(mergePatchDocument, book, Book.class);
         service.updateBook(patched);
-        return ResponseEntity.ok(mergePatchDocument);
+        return ResponseEntity.noContent().build();
     }
 }
