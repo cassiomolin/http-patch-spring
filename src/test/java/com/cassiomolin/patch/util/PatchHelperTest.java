@@ -33,19 +33,11 @@ public class PatchHelperTest {
                 .edition(1)
                 .build();
 
-        JsonPatch patch = Json.createPatch(Json.createArrayBuilder()
-                .add(Json.createObjectBuilder()
-                        .add("op", "replace")
-                        .add("path", "/title")
-                        .add("value", "My Adventures"))
-                .add(Json.createObjectBuilder()
-                        .add("op", "remove")
-                        .add("path", "/edition"))
-                .add(Json.createObjectBuilder()
-                        .add("op", "replace")
-                        .add("path", "/author")
-                        .add("value", "Jane Appleseed"))
-                .build());
+        JsonPatch patch = Json.createPatchBuilder()
+                .replace("/title", "My Adventures")
+                .remove("/edition")
+                .replace("/author", "Jane Appleseed")
+                .build();
 
         Book expected = Book.builder()
                 .id(1L)
@@ -66,7 +58,7 @@ public class PatchHelperTest {
                 .author("John Appleseed")
                 .build();
 
-        JsonMergePatch jsonMergePatch = Json.createMergePatch(Json.createObjectBuilder()
+        JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
                 .add("title", "My Adventures")
                 .add("edition", JsonValue.NULL)
                 .add("author", "Jane Appleseed")
@@ -78,7 +70,7 @@ public class PatchHelperTest {
                 .author("Jane Appleseed")
                 .build();
 
-        Book result = patchHelper.mergePatch(jsonMergePatch, target, Book.class);
+        Book result = patchHelper.mergePatch(mergePatch, target, Book.class);
         assertThat(result).isEqualToComparingFieldByField(expected);
     }
 }
