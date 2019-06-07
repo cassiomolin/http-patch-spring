@@ -102,11 +102,10 @@
             <version>${javax-json.version}</version>
         </dependency>
 
-        <!-- JSR-353 (JSON Processing): Implementation -->
+        <!-- JSR-353 (JSON Processing): Johnzon implementation -->
         <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>${javax-json.version}</version>
+            <groupId>org.apache.johnzon</groupId>
+            <artifactId>johnzon-core</artifactId>
         </dependency>
 
         <!-- Jackson module for the JSR-353 (JSON Processing) -->
