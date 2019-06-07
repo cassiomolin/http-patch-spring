@@ -27,7 +27,6 @@ public class PatchHelperTest {
     public void patch_shouldPatchDocument() {
 
         Book target = Book.builder()
-                .id(1L)
                 .title("Foo Adventures")
                 .author("John Appleseed")
                 .edition(1)
@@ -40,7 +39,6 @@ public class PatchHelperTest {
                 .build();
 
         Book expected = Book.builder()
-                .id(1L)
                 .title("My Adventures")
                 .author("Jane Appleseed")
                 .build();
@@ -53,7 +51,6 @@ public class PatchHelperTest {
     public void mergePatch_shouldMergePatchDocument() {
 
         Book target = Book.builder()
-                .id(1L)
                 .title("Foo Adventures")
                 .author("John Appleseed")
                 .build();
@@ -65,7 +62,6 @@ public class PatchHelperTest {
                 .build());
 
         Book expected = Book.builder()
-                .id(1L)
                 .title("My Adventures")
                 .author("Jane Appleseed")
                 .build();

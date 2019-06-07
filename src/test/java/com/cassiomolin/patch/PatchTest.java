@@ -38,10 +38,10 @@ public class PatchTest {
 
     @Test
     @SneakyThrows
-    public void patch_shouldSucceed() {
+    public void updateBook_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = patchBook(id, fromFile("json/json-patch.json"));
+        ResponseEntity<String> patchResponse = updateBook(id, fromFile("json/put.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
@@ -58,10 +58,30 @@ public class PatchTest {
 
     @Test
     @SneakyThrows
-    public void mergePatch_shouldSucceed() {
+    public void updateBookUsingJsonPatch_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = mergePatchBook(id, fromFile("json/merge-patch.json"));
+        ResponseEntity<String> patchResponse = updateBookUsingJsonPatch(id, fromFile("json/json-patch.json"));
+
+        assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(patchResponse.getBody()).isNull();
+
+        ResponseEntity<String> findResponse = findBook(id);
+        assertThat(findResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        with(findResponse.getBody())
+                .assertThat("$.*", hasSize(4))
+                .assertThat("$.id", is(id.intValue()))
+                .assertThat("$.title", is("My Adventures"))
+                .assertThat("$.edition", is(nullValue()))
+                .assertThat("$.author", is("Jane Appleseed"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void updateBookUsingJsonMergePatch_shouldSucceed() {
+
+        Long id = 1L;
+        ResponseEntity<String> patchResponse = updateBookUsingJsonMergePatch(id, fromFile("json/merge-patch.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
@@ -82,13 +102,19 @@ public class PatchTest {
         return restTemplate.exchange("/books/{id}", HttpMethod.GET, new HttpEntity<>(headers), String.class, id);
     }
 
-    private ResponseEntity<String> patchBook(Long id, Object payload) {
+    private ResponseEntity<String> updateBook(Long id, Object payload) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange("/books/{id}", HttpMethod.PUT, new HttpEntity<>(payload, headers), String.class, id);
+    }
+
+    private ResponseEntity<String> updateBookUsingJsonPatch(Long id, Object payload) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(PatchMediaType.APPLICATION_JSON_PATCH);
         return restTemplate.exchange("/books/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
     }
 
-    private ResponseEntity<String> mergePatchBook(Long id, Object payload) {
+    private ResponseEntity<String> updateBookUsingJsonMergePatch(Long id, Object payload) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(PatchMediaType.APPLICATION_MERGE_PATCH);
         return restTemplate.exchange("/books/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
