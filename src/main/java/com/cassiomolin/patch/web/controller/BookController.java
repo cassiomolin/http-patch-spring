@@ -1,13 +1,13 @@
-package com.cassiomolin.patch.controller;
+package com.cassiomolin.patch.web.controller;
 
 import com.cassiomolin.patch.PatchMediaType;
 import com.cassiomolin.patch.domain.Book;
-import com.cassiomolin.patch.exception.ResourceNotFoundException;
-import com.cassiomolin.patch.mapper.BookMapper;
-import com.cassiomolin.patch.resource.BookResourceInput;
-import com.cassiomolin.patch.resource.BookResourceOutput;
+import com.cassiomolin.patch.web.exception.ResourceNotFoundException;
+import com.cassiomolin.patch.web.mapper.BookMapper;
+import com.cassiomolin.patch.web.resource.BookResourceInput;
+import com.cassiomolin.patch.web.resource.BookResourceOutput;
 import com.cassiomolin.patch.service.BookService;
-import com.cassiomolin.patch.util.PatchHelper;
+import com.cassiomolin.patch.web.util.PatchHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

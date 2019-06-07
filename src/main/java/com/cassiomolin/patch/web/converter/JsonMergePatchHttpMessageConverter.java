@@ -1,4 +1,4 @@
-package com.cassiomolin.patch.controller.converter;
+package com.cassiomolin.patch.web.converter;
 
 import com.cassiomolin.patch.PatchMediaType;
 import org.springframework.http.HttpInputMessage;

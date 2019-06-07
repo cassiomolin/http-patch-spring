@@ -1,4 +1,4 @@
-package com.cassiomolin.patch.util;
+package com.cassiomolin.patch.web.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

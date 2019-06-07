@@ -1,8 +1,8 @@
-package com.cassiomolin.patch.mapper;
+package com.cassiomolin.patch.web.mapper;
 
 import com.cassiomolin.patch.domain.Book;
-import com.cassiomolin.patch.resource.BookResourceInput;
-import com.cassiomolin.patch.resource.BookResourceOutput;
+import com.cassiomolin.patch.web.resource.BookResourceInput;
+import com.cassiomolin.patch.web.resource.BookResourceOutput;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 

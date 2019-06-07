@@ -1,11 +1,9 @@
-package com.cassiomolin.patch.resource;
+package com.cassiomolin.patch.web.resource;
 
 import lombok.Data;
 
 @Data
-public class BookResourceOutput {
-
-    private Long id;
+public class BookResourceInput {
 
     private String title;
 
