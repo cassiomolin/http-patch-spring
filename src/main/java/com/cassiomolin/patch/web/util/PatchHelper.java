@@ -1,5 +1,6 @@
 package com.cassiomolin.patch.web.util;
 
+import com.cassiomolin.patch.web.exception.UnprocessableEntityException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ public class PatchHelper {
      */
     public <T> T patch(JsonPatch patch, T targetBean, Class<T> clazz) {
         JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
-        JsonValue patched = patch.apply(target);
+        JsonValue patched = applyPatch(patch, target);
         return mapper.convertValue(patched, clazz);
     }
 
@@ -41,7 +42,23 @@ public class PatchHelper {
      */
     public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> clazz) {
         JsonValue target = mapper.convertValue(targetBean, JsonValue.class);
-        JsonValue patched = mergePatch.apply(target);
+        JsonValue patched = applyMergePatch(mergePatch, target);
         return mapper.convertValue(patched, clazz);
+    }
+
+    private JsonValue applyPatch(JsonPatch patch, JsonStructure target) {
+        try {
+            return patch.apply(target);
+        } catch (Exception e) {
+            throw new UnprocessableEntityException(e);
+        }
+    }
+
+    private JsonValue applyMergePatch(JsonMergePatch mergePatch, JsonValue target) {
+        try {
+            return mergePatch.apply(target);
+        } catch (Exception e) {
+            throw new UnprocessableEntityException(e);
+        }
     }
 }

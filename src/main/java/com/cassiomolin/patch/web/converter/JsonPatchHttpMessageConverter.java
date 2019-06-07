@@ -33,19 +33,23 @@ public class JsonPatchHttpMessageConverter extends AbstractHttpMessageConverter<
 
     @Override
     protected JsonPatch readInternal(Class<? extends JsonPatch> clazz, HttpInputMessage inputMessage)
-            throws IOException, HttpMessageNotReadableException {
+            throws HttpMessageNotReadableException {
 
         try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
             return Json.createPatch(reader.readArray());
+        } catch (Exception e) {
+            throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
         }
     }
 
     @Override
     protected void writeInternal(JsonPatch jsonPatch, HttpOutputMessage outputMessage)
-            throws IOException, HttpMessageNotWritableException {
+            throws HttpMessageNotWritableException {
 
         try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
             writer.write(jsonPatch.toJsonArray());
+        } catch (Exception e) {
+            throw new HttpMessageNotWritableException(e.getMessage(), e);
         }
     }
 }

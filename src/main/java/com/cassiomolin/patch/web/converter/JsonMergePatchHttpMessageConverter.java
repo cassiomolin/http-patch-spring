@@ -33,19 +33,23 @@ public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConve
 
     @Override
     protected JsonMergePatch readInternal(Class<? extends JsonMergePatch> clazz, HttpInputMessage inputMessage)
-            throws IOException, HttpMessageNotReadableException {
+            throws HttpMessageNotReadableException {
 
         try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
             return Json.createMergePatch(reader.readValue());
+        } catch (Exception e) {
+            throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
         }
     }
 
     @Override
     protected void writeInternal(JsonMergePatch jsonMergePatch, HttpOutputMessage outputMessage)
-            throws IOException, HttpMessageNotWritableException {
+            throws HttpMessageNotWritableException {
 
         try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
             writer.write(jsonMergePatch.toJsonValue());
+        } catch (Exception e) {
+            throw new HttpMessageNotWritableException(e.getMessage(), e);
         }
     }
 }
