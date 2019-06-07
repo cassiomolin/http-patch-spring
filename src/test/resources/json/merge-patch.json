@@ -1,5 +1,17 @@
 {
-  "title": "My Adventures",
-  "edition": null,
-  "author": "Jane Appleseed"
+  "name": "John W. Appleseed",
+  "work": {
+    "title": "Senior Engineer"
+  },
+  "phones": [
+    {
+      "phone": "1111111111",
+      "type": "work"
+    },
+    {
+      "phone": "2222222222"
+    }
+  ],
+  "notes": null,
+  "favorite": true
 }

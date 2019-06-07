@@ -2,17 +2,18 @@ package com.cassiomolin.patch.web.util;
 
 
 import com.cassiomolin.patch.config.JacksonConfig;
-import com.cassiomolin.patch.domain.Book;
+import com.cassiomolin.patch.domain.Contact;
+import com.cassiomolin.patch.domain.Phone;
+import com.cassiomolin.patch.domain.Work;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.json.Json;
-import javax.json.JsonMergePatch;
-import javax.json.JsonPatch;
-import javax.json.JsonValue;
+import javax.json.*;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,47 +27,82 @@ public class PatchHelperTest {
     @Test
     public void patch_shouldPatchDocument() {
 
-        Book target = Book.builder()
-                .title("Foo Adventures")
-                .author("John Appleseed")
-                .edition(1)
+        Contact target = Contact.builder()
+                .id(1L)
+                .name("John Appleseed")
+                .birthday(LocalDate.parse("1990-01-01"))
+                .work(Work.builder().company("Acme").title("Engineer").build())
+                .phones(Lists.newArrayList(Phone.builder().phone("0000000000").build()))
+                .notes("Cool guy!")
+                .favorite(false)
                 .build();
 
         JsonPatch patch = Json.createPatchBuilder()
-                .replace("/title", "My Adventures")
-                .remove("/edition")
-                .replace("/author", "Jane Appleseed")
+                .replace("/name", "John W. Appleseed")
+                .replace("/work/title", "Senior Engineer")
+                .replace("/phones/0/phone", "1111111111")
+                .add("/phones/0/type", "work")
+                .add("/phones/1", JsonObject.EMPTY_JSON_OBJECT)
+                .add("/phones/1/phone", "2222222222")
+                .remove("/notes")
+                .replace("/favorite", JsonValue.TRUE)
                 .build();
 
-        Book expected = Book.builder()
-                .title("My Adventures")
-                .author("Jane Appleseed")
+        Contact expected = Contact.builder()
+                .id(1L)
+                .name("John W. Appleseed")
+                .birthday(LocalDate.parse("1990-01-01"))
+                .work(Work.builder().company("Acme").title("Senior Engineer").build())
+                .phones(Lists.newArrayList(
+                        Phone.builder().phone("1111111111").type("work").build(),
+                        Phone.builder().phone("2222222222").build()))
+                .favorite(true)
                 .build();
 
-        Book result = patchHelper.patch(patch, target, Book.class);
+        Contact result = patchHelper.patch(patch, target, Contact.class);
         assertThat(result).isEqualToComparingFieldByField(expected);
     }
 
     @Test
     public void mergePatch_shouldMergePatchDocument() {
 
-        Book target = Book.builder()
-                .title("Foo Adventures")
-                .author("John Appleseed")
+        Contact target = Contact.builder()
+                .id(1L)
+                .name("John Appleseed")
+                .birthday(LocalDate.parse("1990-01-01"))
+                .work(Work.builder().company("Acme").title("Engineer").build())
+                .phones(Lists.newArrayList(Phone.builder().phone("0000000000").build()))
+                .notes("Cool guy!")
+                .favorite(false)
                 .build();
 
         JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
-                .add("title", "My Adventures")
-                .add("edition", JsonValue.NULL)
-                .add("author", "Jane Appleseed")
+                .add("name", "John W. Appleseed")
+                .add("work", Json.createObjectBuilder()
+                        .add("title", "Senior Engineer"))
+                .add("phones", Json.createArrayBuilder()
+                        .add(Json.createObjectBuilder()
+                                .add("phone", "1111111111")
+                                .add("type", "work"))
+                        .add(Json.createObjectBuilder()
+                                .add("phone", "2222222222"))
+                )
+                .add("notes", JsonValue.NULL)
+                .add("favorite", JsonValue.TRUE)
                 .build());
 
-        Book expected = Book.builder()
-                .title("My Adventures")
-                .author("Jane Appleseed")
+        Contact expected = Contact.builder()
+                .id(1L)
+                .name("John W. Appleseed")
+                .birthday(LocalDate.parse("1990-01-01"))
+                .work(Work.builder().company("Acme").title("Senior Engineer").build())
+                .phones(Lists.newArrayList(
+                        Phone.builder().phone("1111111111").type("work").build(),
+                        Phone.builder().phone("2222222222").build()))
+                .favorite(true)
                 .build();
 
-        Book result = patchHelper.mergePatch(mergePatch, target, Book.class);
+        Contact result = patchHelper.mergePatch(mergePatch, target, Contact.class);
         assertThat(result).isEqualToComparingFieldByField(expected);
     }
 }

@@ -21,7 +21,6 @@ import static com.jayway.jsonassert.JsonAssert.with;
 import static com.jayway.jsonassert.impl.matcher.IsCollectionWithSize.hasSize;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @DirtiesContext
@@ -39,86 +38,110 @@ public class PatchTest {
 
     @Test
     @SneakyThrows
-    public void updateBook_shouldSucceed() {
+    public void updateContact_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateBook(id, fromFile("json/put.json"));
+        ResponseEntity<String> patchResponse = updateContact(id, fromFile("json/put.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
 
-        ResponseEntity<String> findResponse = findBook(id);
+        ResponseEntity<String> findResponse = findContact(id);
         assertThat(findResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         with(findResponse.getBody())
-                .assertThat("$.*", hasSize(4))
+                .assertThat("$.*", hasSize(6))
                 .assertThat("$.id", is(id.intValue()))
-                .assertThat("$.title", is("My Adventures"))
-                .assertThat("$.edition", is(nullValue()))
-                .assertThat("$.author", is("Jane Appleseed"));
+                .assertThat("$.name", is("John W. Appleseed"))
+                .assertThat("$.work.*", hasSize(2))
+                .assertThat("$.work.company", is("Acme"))
+                .assertThat("$.work.title", is("Senior Engineer"))
+                .assertThat("$.phones", hasSize(2))
+                .assertThat("$.phones[0].*", hasSize(2))
+                .assertThat("$.phones[0].phone", is("1111111111"))
+                .assertThat("$.phones[0].type", is("work"))
+                .assertThat("$.phones[1].*", hasSize(1))
+                .assertThat("$.phones[1].phone", is("2222222222"))
+                .assertThat("$.favorite", is(true));
     }
 
     @Test
     @SneakyThrows
-    public void updateBookUsingJsonPatch_shouldSucceed() {
+    public void updateContactUsingJsonPatch_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateBookUsingJsonPatch(id, fromFile("json/json-patch.json"));
+        ResponseEntity<String> patchResponse = updateContactUsingJsonPatch(id, fromFile("json/json-patch.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
 
-        ResponseEntity<String> findResponse = findBook(id);
+        ResponseEntity<String> findResponse = findContact(id);
         assertThat(findResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         with(findResponse.getBody())
-                .assertThat("$.*", hasSize(4))
+                .assertThat("$.*", hasSize(6))
                 .assertThat("$.id", is(id.intValue()))
-                .assertThat("$.title", is("My Adventures"))
-                .assertThat("$.edition", is(nullValue()))
-                .assertThat("$.author", is("Jane Appleseed"));
+                .assertThat("$.name", is("John W. Appleseed"))
+                .assertThat("$.work.*", hasSize(2))
+                .assertThat("$.work.company", is("Acme"))
+                .assertThat("$.work.title", is("Senior Engineer"))
+                .assertThat("$.phones", hasSize(2))
+                .assertThat("$.phones[0].*", hasSize(2))
+                .assertThat("$.phones[0].phone", is("1111111111"))
+                .assertThat("$.phones[0].type", is("work"))
+                .assertThat("$.phones[1].*", hasSize(1))
+                .assertThat("$.phones[1].phone", is("2222222222"))
+                .assertThat("$.favorite", is(true));
     }
 
     @Test
     @SneakyThrows
-    public void updateBookUsingJsonMergePatch_shouldSucceed() {
+    public void updateContactUsingJsonMergePatch_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateBookUsingJsonMergePatch(id, fromFile("json/merge-patch.json"));
+        ResponseEntity<String> patchResponse = updateContactUsingJsonMergePatch(id, fromFile("json/merge-patch.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
 
-        ResponseEntity<String> findResponse = findBook(id);
+        ResponseEntity<String> findResponse = findContact(id);
         assertThat(findResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         with(findResponse.getBody())
-                .assertThat("$.*", hasSize(4))
+                .assertThat("$.*", hasSize(6))
                 .assertThat("$.id", is(id.intValue()))
-                .assertThat("$.title", is("My Adventures"))
-                .assertThat("$.edition", is(nullValue()))
-                .assertThat("$.author", is("Jane Appleseed"));
+                .assertThat("$.name", is("John W. Appleseed"))
+                .assertThat("$.work.*", hasSize(2))
+                .assertThat("$.work.company", is("Acme"))
+                .assertThat("$.work.title", is("Senior Engineer"))
+                .assertThat("$.phones", hasSize(2))
+                .assertThat("$.phones[0].*", hasSize(2))
+                .assertThat("$.phones[0].phone", is("1111111111"))
+                .assertThat("$.phones[0].type", is("work"))
+                .assertThat("$.phones[1].*", hasSize(1))
+                .assertThat("$.phones[1].phone", is("2222222222"))
+                .assertThat("$.favorite", is(true));
     }
 
-    private ResponseEntity<String> findBook(Long id) {
+    private ResponseEntity<String> findContact(Long id) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange("/books/{id}", HttpMethod.GET, new HttpEntity<>(headers), String.class, id);
+        return restTemplate.exchange("/contacts/{id}", HttpMethod.GET, new HttpEntity<>(headers), String.class, id);
     }
 
-    private ResponseEntity<String> updateBook(Long id, Object payload) {
+    private ResponseEntity<String> updateContact(Long id, Object payload) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        return restTemplate.exchange("/books/{id}", HttpMethod.PUT, new HttpEntity<>(payload, headers), String.class, id);
+        return restTemplate.exchange("/contacts/{id}", HttpMethod.PUT, new HttpEntity<>(payload, headers), String.class, id);
     }
 
-    private ResponseEntity<String> updateBookUsingJsonPatch(Long id, Object payload) {
+    private ResponseEntity<String> updateContactUsingJsonPatch(Long id, Object payload) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(PatchMediaType.APPLICATION_JSON_PATCH);
-        return restTemplate.exchange("/books/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
+        return restTemplate.exchange("/contacts/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
     }
 
-    private ResponseEntity<String> updateBookUsingJsonMergePatch(Long id, Object payload) {
+    private ResponseEntity<String> updateContactUsingJsonMergePatch(Long id, Object payload) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(PatchMediaType.APPLICATION_MERGE_PATCH);
-        return restTemplate.exchange("/books/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
+        return restTemplate.exchange("/contacts/{id}", HttpMethod.PATCH, new HttpEntity<>(payload, headers), String.class, id);
     }
 
     @SneakyThrows
