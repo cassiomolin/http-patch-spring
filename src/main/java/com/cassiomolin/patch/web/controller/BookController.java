@@ -1,6 +1,6 @@
 package com.cassiomolin.patch.web.controller;
 
-import com.cassiomolin.patch.PatchMediaType;
+import com.cassiomolin.patch.web.PatchMediaType;
 import com.cassiomolin.patch.domain.Book;
 import com.cassiomolin.patch.web.exception.ResourceNotFoundException;
 import com.cassiomolin.patch.web.mapper.BookMapper;

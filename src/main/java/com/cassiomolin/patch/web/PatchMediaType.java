@@ -1,4 +1,4 @@
-package com.cassiomolin.patch;
+package com.cassiomolin.patch.web;
 
 import org.springframework.http.MediaType;
 

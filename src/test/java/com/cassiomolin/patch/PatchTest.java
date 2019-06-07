@@ -1,5 +1,6 @@
 package com.cassiomolin.patch;
 
+import com.cassiomolin.patch.web.PatchMediaType;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,6 +1,6 @@
 package com.cassiomolin.patch.web.converter;
 
-import com.cassiomolin.patch.PatchMediaType;
+import com.cassiomolin.patch.web.PatchMediaType;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.converter.AbstractHttpMessageConverter;
