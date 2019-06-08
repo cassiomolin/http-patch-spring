@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.json.JsonMergePatch;
 import javax.json.JsonPatch;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -62,7 +63,7 @@ public class ContactController {
      */
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Contact> updateContact(@PathVariable Long id,
-                                                 @RequestBody ContactResourceInput resourceInput) {
+                                                 @RequestBody @Valid ContactResourceInput resourceInput) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
         mapper.update(resourceInput, contact);

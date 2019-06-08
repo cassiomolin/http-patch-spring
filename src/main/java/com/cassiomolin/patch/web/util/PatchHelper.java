@@ -4,13 +4,16 @@ import com.cassiomolin.patch.web.exception.UnprocessableEntityException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 import javax.json.JsonMergePatch;
 import javax.json.JsonPatch;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
+import javax.validation.Valid;
 
 @Component
+@Validated
 @RequiredArgsConstructor
 public class PatchHelper {
 
@@ -25,6 +28,7 @@ public class PatchHelper {
      * @param <T>
      * @return patched object
      */
+    @Valid
     public <T> T patch(JsonPatch patch, T targetBean, Class<T> clazz) {
         JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
         JsonValue patched = applyPatch(patch, target);
@@ -40,6 +44,7 @@ public class PatchHelper {
      * @param <T>
      * @return patched object
      */
+    @Valid
     public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> clazz) {
         JsonValue target = mapper.convertValue(targetBean, JsonValue.class);
         JsonValue patched = applyMergePatch(mergePatch, target);
