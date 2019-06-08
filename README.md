@@ -73,44 +73,65 @@ For an incoming request with the `application/json-patch+json` content type, we 
 
 And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
 
-Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward:
+Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
+
+For convenience, let's extend `AbstractHttpMessageConverter` and annotate our implementation with `@Component`, so Spring can pick it up:
 
 ```java
 @Component
 public class JsonPatchHttpMessageConverter extends AbstractHttpMessageConverter<JsonPatch> {
+   ...
+}
+```
 
-    public JsonPatchHttpMessageConverter() {
-        super(MediaType.valueOf("application/json-patch+json"));
-    }
+Our constructor will invoke the parent's constructor indicating the supported media type:
 
-    @Override
-    protected boolean supports(Class<?> clazz) {
-        return JsonPatch.class.isAssignableFrom(clazz);
-    }
+```java
+public JsonPatchHttpMessageConverter() {
+    super(MediaType.valueOf("application/json-patch+json"));
+}
+```
 
-    @Override
-    protected JsonPatch readInternal(Class<? extends JsonPatch> clazz, HttpInputMessage inputMessage)
-            throws HttpMessageNotReadableException {
+Then we indicate that this converted will support the [`JsonPatch`][javax.json.JsonPatch] class:
 
-        try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
-            return Json.createPatch(reader.readArray());
-        } catch (Exception e) {
-            throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
-        }
-    }
+```java
+@Override
+protected boolean supports(Class<?> clazz) {
+    return JsonPatch.class.isAssignableFrom(clazz);
+}
+```
 
-    @Override
-    protected void writeInternal(JsonPatch jsonPatch, HttpOutputMessage outputMessage)
-            throws HttpMessageNotWritableException {
+Then we'll implement how the converter will read the HTTP request payload and convert it to a [`JsonPatch`][javax.json.JsonPatch] instance:
 
-        try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
-            writer.write(jsonPatch.toJsonArray());
-        } catch (Exception e) {
-            throw new HttpMessageNotWritableException(e.getMessage(), e);
-        }
+```java
+@Override
+protected JsonPatch readInternal(Class<? extends JsonPatch> clazz, HttpInputMessage inputMessage)
+        throws HttpMessageNotReadableException {
+
+    try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
+        return Json.createPatch(reader.readArray());
+    } catch (Exception e) {
+        throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
     }
 }
 ```
+
+It's unlikely we'll write [`JsonPatch`][javax.json.JsonPatch] instances to the responses, but we could implement it as follows:
+
+```java
+@Override
+protected void writeInternal(JsonPatch jsonPatch, HttpOutputMessage outputMessage)
+        throws HttpMessageNotWritableException {
+
+    try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
+        writer.write(jsonPatch.toJsonArray());
+    } catch (Exception e) {
+        throw new HttpMessageNotWritableException(e.getMessage(), e);
+    }
+}
+```
+
+The [`JsonMergePatch`][javax.json.JsonMergePatch] message converter is pretty much the same:
 
 ```java
 @Component
@@ -218,6 +239,46 @@ public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanCl
     
     // Convert the JSON document to a Java bean
     return mapper.convertValue(patched, beanClass);
+}
+```
+
+And here's what the method controller implementation will be like:
+
+```java
+@PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody JsonPatch patchDocument) {
+
+    // Find the model that will be patched
+    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    
+    // Apply the patch
+    Contact patched = patch(patchDocument, contact, Contact.class);
+    
+    // Persist the changes
+    service.updateContact(patched);
+
+    return ResponseEntity.noContent().build();
+}
+```
+
+For JSON Merge Patch, it's pretty much the same:
+
+```java
+@PatchMapping(path = "/{id}", consumes = "application/merge-patch+json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody JsonMergePatch mergePatchDocument) {
+
+    // Find the model that will be patched
+    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    
+    // Apply the patch
+    Contact patched = mergePatch(mergePatchDocument, contact, Contact.class);
+    
+    // Persist the changes
+    service.updateContact(patched);
+
+    return ResponseEntity.noContent().build();
 }
 ```
 
