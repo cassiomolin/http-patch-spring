@@ -23,7 +23,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Now consider we want to update this contact. John has been promoted as a senior engineer and we want to keep our contact list updated. We could do it with a `PUT` request:
+Now consider we want to update this resource. John has been promoted as a senior engineer and we want to keep our contact list updated. We could do it with a `PUT` request:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -46,20 +46,20 @@ Content-Type: application/json
 }
 ```
 
-With `PUT`, we have to send the full representation of the resource even when we need to update a _single_ field of a resource, which may not be desirable.
+With `PUT`, however, we have to send the full representation of the resource even when we need to update a _single_ field of a resource, which may not be desirable in some situations.
 
-Let's have a look at how the `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the documents that currently define the HTTP/1.1 protocol:
+Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the documents that currently define the HTTP/1.1 protocol:
 
 >[**4.3.4.  PUT**][put]
 >
 >The `PUT` method requests that the state of the target resource be created or replaced with the state defined by the representation enclosed in the request message payload. [...]
 
-As per definition, the `PUT` method can be used to:
+As per definition, the `PUT` method can be used for:
 
-- Create resources <sup>*</sup> or;
-- Replace the state of a given resource.
+- Creating resources <sup>*</sup> or;
+- Replacing the state of a given resource.
  
-It's not meant for performing _partial modifications_ to a resource. To fill this gap, the `PATCH` method was created. It is currently defined in the [RFC 5789][rfc5789]:
+It's not meant for performing _partial modifications_ to a resource. To fill this gap, the `PATCH` method was created a it is currently defined in the [RFC 5789][rfc5789]:
 
 > [**2. The PATCH Method**][patch]
 >
@@ -72,9 +72,9 @@ The difference between the `PUT` and `PATCH` requests is reflected in the way th
 
 ## Describing how the resource will be modified
 
-The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
+The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that set of instructions is identified by a media type.
 
-Let's have a look at some formats for expressing how a resource will be `PATCH`ed:
+Let's have a look at some formats for describing how a resource will be `PATCH`ed:
 
 ### JSON Patch
 
@@ -82,7 +82,17 @@ JSON Patch is a format for expressing a sequence of operations to be applied to 
 
 It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
 
-(add examples)
+A request to update the John's job title could be as follows:
+
+```http
+PATCH /contacts/1 HTTP/1.1
+Host: example.org
+Content-Type: application/json-patch+json
+
+[
+  { "op": "replace", "path": "/work/title", "value": "Senior Engineer" }
+]
+```
 
 ### JSON Merge Patch
 
@@ -90,7 +100,19 @@ JSON Merge Patch defines a format and processing rules for applying operations t
 
 It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
 
-(add examples)
+A request to update the John's job title could be as follows:
+
+```http
+PATCH /contacts/1 HTTP/1.1
+Host: example.org
+Content-Type: application/merge-patch+json
+
+{
+  "work": {
+    "title": "Senior Engineer"
+  }
+}
+```
 
 ## Java API for JSON Processing
 
