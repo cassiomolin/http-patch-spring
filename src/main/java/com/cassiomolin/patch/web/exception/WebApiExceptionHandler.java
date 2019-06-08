@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -34,7 +35,7 @@ public class WebApiExceptionHandler extends ResponseEntityExceptionHandler {
 
         ApiError apiError = ApiError.builder()
                 .message("Validation error")
-                .status(HttpStatus.BAD_REQUEST)
+                .status(ex.getParameter().hasParameterAnnotation(RequestBody.class) ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.BAD_REQUEST)
                 .errors(Stream.concat(globalErrors.stream(), fieldErrors.stream()).collect(Collectors.toList()))
                 .build();
 
@@ -50,7 +51,7 @@ public class WebApiExceptionHandler extends ResponseEntityExceptionHandler {
 
         ApiError apiError = ApiError.builder()
                 .message("Validation error")
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .errors(errors)
                 .build();
 
