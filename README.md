@@ -32,7 +32,7 @@ So the `PATCH` method is suitable for performing _partial modifications_ to a re
 
 The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
 
-Let's have a look at some formats for expressing how a resource should be `PATCH`ed:
+Let's have a look at some formats for expressing how a resource will be `PATCH`ed:
 
 ### JSON Patch
 
@@ -52,9 +52,12 @@ It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge
 
 ## Java API for JSON Processing
 
-The Java API for JSON Processing 1.1, also known as JSON-P 1.1, brought official support for JSON Patch and JSON Merge Patch to Java EE.
+JSON-P 1.1, also known as Java API for JSON Processing, brought official support for JSON Patch and JSON Merge Patch to Java EE: 
 
-JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+- [`JsonPatch`][javax.json.JsonPatch]: Represents an implementation of JSON Patch
+- [`JsonMergePatch`][javax.json.JsonMergePatch]: Represents an implementation of JSON Merge Patch
+
+JSON-P 1.1 is, however, just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
 
 ```xml
 <dependency>
@@ -64,15 +67,19 @@ JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for refere
 </dependency>
 ```
 
-## Creating the controller endpoints
-
-(coming soon)
-
 ## Parsing the request payload
 
 (coming soon)
 
+## Creating the controller endpoints
+
+(coming soon)
+
 ## Applying the patch
+
+(coming soon)
+
+## Validating the patch
 
 (coming soon)
 
@@ -89,3 +96,5 @@ JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for refere
   [so.56241060]: https://stackoverflow.com/a/56241060/1426227
   [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
   [johnzon]: https://johnzon.apache.org/
+  [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
+  [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
