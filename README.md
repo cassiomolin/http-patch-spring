@@ -30,12 +30,12 @@ So the `PATCH` method is suitable for performing _partial modifications_ to a re
 
 The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
 
+## JSON Patch and JSON Merge Patch
+
 Some standard and suitable formats for the `PATCH`ing are listed below:
 
 - JSON Patch, which is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
 - JSON Merge Patch, which is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
-
-## JSON Patch and JSON Merge Patch
 
 (coming soon)
 
@@ -53,7 +53,7 @@ Some standard and suitable formats for the `PATCH`ing are listed below:
 
 ---
 
-<sup>*</sup>: You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See [my answer][so.56241060] on Stack Overflow for details on this.
+<sup>*</sup> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See [my answer][so.56241060] on Stack Overflow for details on this.
 
   [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
   [patch]: https://tools.ietf.org/html/rfc5789#section-2
