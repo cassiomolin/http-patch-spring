@@ -53,7 +53,7 @@ Some standard and suitable formats for the `PATCH`ing are listed below:
 
 ---
 
-<sup>*<sup>: You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this.
+<sup>*</sup>: You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See [my answer][so.56241060] on Stack Overflow for details on this.
 
   [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
   [patch]: https://tools.ietf.org/html/rfc5789#section-2
