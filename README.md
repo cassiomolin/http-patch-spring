@@ -12,12 +12,10 @@ The `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the document
 
 So `PUT` is meant for two things:
 
-- Creating resources. However you may not want to support `PUT` for this purpose if you rely on the server to generate identifiers for your resources (see my [answer][so.56241060] on Stack Overflow for details on this).
+- Creating resources <sup>*</sup>
 - Replacing the state of a given resource.
  
-As per definition, the `PUT` method is not meant for performing partial modifications to a resource.
-
-To fill this gap, the `PATCH` method was created and it's currently defined in the [RFC 5789][rfc5789]:
+As per definition, the `PUT` method is not meant for performing _partial modifications_ to a resource. And, to fill this gap, the `PATCH` method was created. It is currently defined in the [RFC 5789][rfc5789]:
 
 > [**2. The PATCH Method**][patch]
 >
@@ -53,6 +51,9 @@ Some standard and suitable formats for the `PATCH`ing are listed below:
 
 (coming soon)
 
+---
+
+<sup>*<sup>: You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this.
 
   [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
   [patch]: https://tools.ietf.org/html/rfc5789#section-2
