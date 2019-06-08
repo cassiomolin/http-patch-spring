@@ -34,7 +34,7 @@ public class PatchHelper {
     public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
         JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
         JsonValue patched = applyPatch(patch, target);
-        return convertToBeanAndValidate(patched, beanClass);
+        return convertAndValidate(patched, beanClass);
     }
 
     /**
@@ -49,7 +49,7 @@ public class PatchHelper {
     public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanClass) {
         JsonValue target = mapper.convertValue(targetBean, JsonValue.class);
         JsonValue patched = applyMergePatch(mergePatch, target);
-        return convertToBeanAndValidate(patched, beanClass);
+        return convertAndValidate(patched, beanClass);
     }
 
     private JsonValue applyPatch(JsonPatch patch, JsonStructure target) {
@@ -68,7 +68,7 @@ public class PatchHelper {
         }
     }
 
-    private <T> T convertToBeanAndValidate(JsonValue jsonValue, Class<T> beanClass) {
+    private <T> T convertAndValidate(JsonValue jsonValue, Class<T> beanClass) {
         T bean = mapper.convertValue(jsonValue, beanClass);
         validate(bean);
         return bean;

@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring MVC
 
-This article describes an approach to support HTTP `PATCH` for performing partial updates in Spring MVC.
+Here I intend to describe an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC.
 
 ## The problem with `PUT` and the need for `PATCH`
 
@@ -23,7 +23,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Now consider we want to update this resource. John has been promoted as a senior engineer and we want to keep our contact list updated. We could do it with a `PUT` request:
+Now consider we want to update this resource. John has been promoted as a senior engineer and we want to keep our contact list updated. We could achieve it with a `PUT` request:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -54,12 +54,12 @@ Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7
 >
 >The `PUT` method requests that the state of the target resource be created or replaced with the state defined by the representation enclosed in the request message payload. [...]
 
-As per definition, the `PUT` method can be used for:
+As per definition, the `PUT` method is meant to be used for:
 
-- Creating resources <sup>*</sup> or;
+- Creating resources <sup>*</sup> and/or;
 - Replacing the state of a given resource.
  
-It's not meant for performing _partial modifications_ to a resource. To fill this gap, the `PATCH` method was created a it is currently defined in the [RFC 5789][rfc5789]:
+It's not meant for performing _partial modifications_ to resource. To fill this gap, the `PATCH` method was created a it is currently defined in the [RFC 5789][rfc5789]:
 
 > [**2. The PATCH Method**][patch]
 >
@@ -78,9 +78,7 @@ Let's have a look at some formats for describing how a resource will be `PATCH`e
 
 ### JSON Patch
 
-JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. 
-
-It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
+JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
 
 A request to update the John's job title could be as follows:
 
@@ -96,9 +94,7 @@ Content-Type: application/json-patch+json
 
 ### JSON Merge Patch
 
-JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document.
-
-It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
+JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document. It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
 
 A request to update the John's job title could be as follows:
 
@@ -121,9 +117,38 @@ JSON-P 1.1, also known as Java API for JSON Processing, brought official support
 - [`JsonPatch`][javax.json.JsonPatch]: Represents an implementation of JSON Patch
 - [`JsonMergePatch`][javax.json.JsonMergePatch]: Represents an implementation of JSON Merge Patch
 
-(add examples)
+To patch using JSON Patch, we would have the following: 
 
-JSON-P 1.1 is, however, just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+```java
+// Target JSON document to be patched
+JsonObject target = ...;
+
+// Create JSON Patch document
+JsonPatch jsonPatch = Json.createPatchBuilder()
+        .replace("/work/title", "Senior Engineer")
+        .build();
+
+// Apply patch to the target document
+JsonValue patched = jsonPatch.apply(target);
+```
+
+And to patch using JSON Merge Patch, we would have the following:
+
+```java
+// Target JSON document to be patched
+JsonObject target = ...;
+
+// Create JSON Merge Patch document
+JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
+        .add("work", Json.createObjectBuilder()
+                .add("title", "Senior Engineer"))
+        .build());
+
+// Apply patch to the target document
+JsonValue patched = mergePatch.apply(target);
+```
+
+Having said that, it's important to mention that JSON-P 1.1 is only an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
 
 ```xml
 <dependency>
@@ -258,9 +283,9 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Applying the patch
 
-It's important to keep in mind that both JSON Patch and JSON Merge patch operate over JSON documents. 
+It's important to keep in mind that both JSON Patch and JSON Merge Patch operate over JSON documents. 
 
-So, to apply the patch to our Java beans, we first need to convert the Java bean to a `JsonStructure` or `JsonValue`. Then apply the patch it and convert the patched document back to a Java bean.
+So, to apply the patch to Java beans, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then apply the patch to it and convert the patched document back to a Java bean.
 
 These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types, so that we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing:
 
