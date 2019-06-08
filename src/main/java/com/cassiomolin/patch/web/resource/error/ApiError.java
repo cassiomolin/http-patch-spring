@@ -1,4 +1,4 @@
-package com.cassiomolin.patch.web.resource;
+package com.cassiomolin.patch.web.resource.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,5 +18,5 @@ public class ApiError {
 
     private String message;
 
-    private List<String> errors;
+    private List<?> details;
 }
