@@ -158,6 +158,7 @@ Whith HTTP message converters in place, we can receive [`JsonPatch`][javax.json.
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonPatch patchDocument) {
     ...
+    
     return ResponseEntity.noContent().build();
 }
 ```
@@ -167,13 +168,58 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonMergePatch mergePatchDocument) {
     ...
+    
     return ResponseEntity.noContent().build();
 }
 ```
 
 ## Applying the patch
 
-(coming soon)
+It's important to keep in mind that both JSON Patch and JSON Merge patch operate over JSON documents. 
+
+So, to apply the patch to our Java beans, we first need to convert the Java bean to a `JsonStructure` or `JsonValue`. Then apply the patch it and convert the patched document back to a Java bean.
+
+These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types, so that we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing:
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr353</artifactId>
+    <version>${jackson.version}</version>
+</dependency>
+```
+
+Here's what the method to apply a JSON Patch could be like:
+
+```java
+public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
+    
+    // Convert the Java bean to a JSON document
+    JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
+    
+    // Apply the JSON Patch to the JSON document
+    JsonValue patched = patch.apply(target);
+    
+    // Convert the JSON document to a Java bean
+    return mapper.convertValue(patched, beanClass);
+}
+```
+
+And here's what the method to apply a JSON Merge Patch could be like:
+
+```java
+public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanClass) {
+    
+    // Convert the Java bean to a JSON document
+    JsonValue target = mapper.convertValue(targetBean, JsonValue.class);
+    
+    // Apply the JSON Merge Patch to the JSON document
+    JsonValue patched = mergePatch.apply(target);
+    
+    // Convert the JSON document to a Java bean
+    return mapper.convertValue(patched, beanClass);
+}
+```
 
 ## Validating the patch
 
@@ -196,3 +242,4 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
   [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
   [org.springframework.web.bind.annotation.RequestBody]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestBody.html
+  [jackson-datatype-jsr353]: https://github.com/FasterXML/jackson-datatype-jsr353
