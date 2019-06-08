@@ -151,7 +151,25 @@ public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConve
 
 ## Creating the controller endpoints
 
-(coming soon)
+Whith HTTP message converters in place, we can receive [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch] as method arguments in our controller methods, annotated with [`@RequestBody`][org.springframework.web.bind.annotation.RequestBody]:
+
+```java
+@PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody JsonPatch patchDocument) {
+    ...
+    return ResponseEntity.noContent().build();
+}
+```
+
+```java
+@PatchMapping(path = "/{id}", consumes = "application/merge-patch+json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody JsonMergePatch mergePatchDocument) {
+    ...
+    return ResponseEntity.noContent().build();
+}
+```
 
 ## Applying the patch
 
@@ -177,3 +195,4 @@ public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConve
   [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
   [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
   [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
+  [org.springframework.web.bind.annotation.RequestBody]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestBody.html
