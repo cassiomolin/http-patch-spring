@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring MVC
 
-This article describes one possible approach to support HTTP `PATCH` for performing partial updates in Spring MVC and the challenges that come with it.
+This article describes an approach to support HTTP `PATCH` for performing partial updates in Spring MVC.
 
 ## The problem with `PUT` and the need for `PATCH`
 
@@ -28,16 +28,41 @@ The difference between the `PUT` and `PATCH` requests is reflected in the way th
 
 So the `PATCH` method is suitable for performing _partial modifications_ to a resource (while `PUT` is not).
 
-## JSON Patch and JSON Merge Patch
+## Describing how the resource will be modified
 
 The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
 
-Some standard and suitable formats for the `PATCH`ing are listed below:
+Let's have a look at some formats for expressing how a resource should be `PATCH`ed:
 
-- JSON Patch, which is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
-- JSON Merge Patch, which is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
+### JSON Patch
 
-(coming soon)
+JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. 
+
+It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
+
+(add examples)
+
+### JSON Merge Patch
+
+JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document.
+
+It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
+
+(add examples)
+
+## Java API for JSON Processing
+
+The Java API for JSON Processing 1.1, also known as JSON-P 1.1, brought official support for JSON Patch and JSON Merge Patch to Java EE.
+
+JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+
+```xml
+<dependency>
+  <groupId>org.apache.johnzon</groupId>
+  <artifactId>johnzon-core</artifactId>
+  <version>${johnzon.version}</version>
+</dependency>
+```
 
 ## Creating the controller endpoints
 
@@ -62,3 +87,5 @@ Some standard and suitable formats for the `PATCH`ing are listed below:
   [rfc6902]: https://tools.ietf.org/html/rfc6902
   [rfc7396]: https://tools.ietf.org/html/rfc7396
   [so.56241060]: https://stackoverflow.com/a/56241060/1426227
+  [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
+  [johnzon]: https://johnzon.apache.org/
