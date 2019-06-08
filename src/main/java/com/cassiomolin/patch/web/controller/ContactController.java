@@ -62,8 +62,8 @@ public class ContactController {
      * @return HTTP response with the 204 status code if the operation completed successfully
      */
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Contact> updateContact(@PathVariable Long id,
-                                                 @RequestBody @Valid ContactResourceInput resourceInput) {
+    public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                              @RequestBody @Valid ContactResourceInput resourceInput) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
         mapper.update(resourceInput, contact);
@@ -79,19 +79,19 @@ public class ContactController {
      * @param patchDocument JSON Patch document
      * @return HTTP response with the 204 status code if the operation completed successfully
      */
-@PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
-public ResponseEntity<Contact> updateContact(@PathVariable Long id,
-                                             @RequestBody JsonPatch patchDocument) {
+    @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+    public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                              @RequestBody JsonPatch patchDocument) {
 
-    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-    ContactResourceInput resourceInput = mapper.asInput(contact);
-    ContactResourceInput patched = patchHelper.patch(patchDocument, resourceInput, ContactResourceInput.class);
+        Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+        ContactResourceInput resourceInput = mapper.asInput(contact);
+        ContactResourceInput patched = patchHelper.patch(patchDocument, resourceInput, ContactResourceInput.class);
 
-    mapper.update(patched, contact);
-    service.updateContact(contact);
+        mapper.update(patched, contact);
+        service.updateContact(contact);
 
-    return ResponseEntity.noContent().build();
-}
+        return ResponseEntity.noContent().build();
+    }
 
     /**
      * Update the contact with the given id using JSON Merge Patch (RFC 7396).
@@ -101,8 +101,8 @@ public ResponseEntity<Contact> updateContact(@PathVariable Long id,
      * @return HTTP response with the 204 status code if the operation completed successfully
      */
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_MERGE_PATCH_VALUE)
-    public ResponseEntity<Contact> updateContact(@PathVariable Long id,
-                                                 @RequestBody JsonMergePatch mergePatchDocument) {
+    public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                              @RequestBody JsonMergePatch mergePatchDocument) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
         ContactResourceInput resourceInput = mapper.asInput(contact);

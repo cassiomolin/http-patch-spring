@@ -4,7 +4,6 @@ import com.cassiomolin.patch.web.exception.UnprocessableEntityException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.annotation.Validated;
 
 import javax.json.JsonMergePatch;
 import javax.json.JsonPatch;
@@ -16,7 +15,6 @@ import javax.validation.Validator;
 import java.util.Set;
 
 @Component
-@Validated
 @RequiredArgsConstructor
 public class PatchHelper {
 
