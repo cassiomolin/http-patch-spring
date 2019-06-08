@@ -6,26 +6,37 @@ import com.cassiomolin.patch.domain.Contact;
 import com.cassiomolin.patch.domain.Phone;
 import com.cassiomolin.patch.domain.Work;
 import org.assertj.core.util.Lists;
+import org.assertj.core.util.Sets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.json.*;
+import javax.validation.Validator;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @Import({JacksonConfig.class, PatchHelper.class})
 public class PatchHelperTest {
+
+    @MockBean
+    private Validator validator;
 
     @Autowired
     private PatchHelper patchHelper;
 
     @Test
     public void patch_shouldPatchDocument() {
+
+        when(validator.validate(any())).thenReturn(Sets.newHashSet());
 
         Contact target = Contact.builder()
                 .id(1L)
@@ -61,10 +72,14 @@ public class PatchHelperTest {
 
         Contact result = patchHelper.patch(patch, target, Contact.class);
         assertThat(result).isEqualToComparingFieldByField(expected);
+
+        verify(validator).validate(any());
     }
 
     @Test
     public void mergePatch_shouldMergePatchDocument() {
+
+        when(validator.validate(any())).thenReturn(Sets.newHashSet());
 
         Contact target = Contact.builder()
                 .id(1L)
@@ -104,5 +119,7 @@ public class PatchHelperTest {
 
         Contact result = patchHelper.mergePatch(mergePatch, target, Contact.class);
         assertThat(result).isEqualToComparingFieldByField(expected);
+
+        verify(validator).validate(any());
     }
 }
