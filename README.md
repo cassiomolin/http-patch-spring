@@ -28,9 +28,9 @@ The difference between the `PUT` and `PATCH` requests is reflected in the way th
 
 So the `PATCH` method is suitable for performing _partial modifications_ to a resource (while `PUT` is not).
 
-The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
-
 ## JSON Patch and JSON Merge Patch
+
+The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that such set of instructions is identified by a media type.
 
 Some standard and suitable formats for the `PATCH`ing are listed below:
 
