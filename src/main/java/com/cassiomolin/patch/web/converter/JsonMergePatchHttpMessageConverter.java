@@ -12,7 +12,6 @@ import javax.json.Json;
 import javax.json.JsonMergePatch;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
-import java.io.IOException;
 
 /**
  * HTTP message converter for {@link JsonMergePatch}.

@@ -29,11 +29,13 @@ public class WebApiExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   HttpHeaders headers, HttpStatus status,
                                                                   WebRequest request) {
 
-        List<String> globalErrors = ex.getBindingResult().getGlobalErrors().stream()
+        List<String> globalErrors = ex.getBindingResult().getGlobalErrors()
+                .stream()
                 .map(error -> error.getObjectName() + ": " + error.getDefaultMessage())
                 .collect(toList());
 
-        List<ApiResourcePropertyError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+        List<ApiResourcePropertyError> fieldErrors = ex.getBindingResult().getFieldErrors()
+                .stream()
                 .map(this::toResourcePropertyError)
                 .collect(toList());
 
@@ -49,7 +51,8 @@ public class WebApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
 
-        List<ApiResourcePropertyError> errors = ex.getConstraintViolations().stream()
+        List<ApiResourcePropertyError> errors = ex.getConstraintViolations()
+                .stream()
                 .map(this::toResourcePropertyError)
                 .collect(toList());
 
