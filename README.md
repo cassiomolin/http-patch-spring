@@ -69,7 +69,85 @@ JSON-P 1.1 is, however, just an API (see the [`javax.json`][javax.json] package 
 
 ## Parsing the request payload
 
-(coming soon)
+For an incoming request with the `application/json-patch+json` content type, we want to read the payload as an instance of [`JsonPatch`][javax.json.JsonPatch]. 
+
+And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
+
+Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward:
+
+```java
+@Component
+public class JsonPatchHttpMessageConverter extends AbstractHttpMessageConverter<JsonPatch> {
+
+    public JsonPatchHttpMessageConverter() {
+        super(MediaType.valueOf("application/json-patch+json"));
+    }
+
+    @Override
+    protected boolean supports(Class<?> clazz) {
+        return JsonPatch.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    protected JsonPatch readInternal(Class<? extends JsonPatch> clazz, HttpInputMessage inputMessage)
+            throws HttpMessageNotReadableException {
+
+        try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
+            return Json.createPatch(reader.readArray());
+        } catch (Exception e) {
+            throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
+        }
+    }
+
+    @Override
+    protected void writeInternal(JsonPatch jsonPatch, HttpOutputMessage outputMessage)
+            throws HttpMessageNotWritableException {
+
+        try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
+            writer.write(jsonPatch.toJsonArray());
+        } catch (Exception e) {
+            throw new HttpMessageNotWritableException(e.getMessage(), e);
+        }
+    }
+}
+```
+
+```java
+@Component
+public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConverter<JsonMergePatch> {
+
+    public JsonMergePatchHttpMessageConverter() {
+        super(MediaType.valueOf("application/merge-patch+json"));
+    }
+
+    @Override
+    protected boolean supports(Class<?> clazz) {
+        return JsonMergePatch.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    protected JsonMergePatch readInternal(Class<? extends JsonMergePatch> clazz, HttpInputMessage inputMessage)
+            throws HttpMessageNotReadableException {
+
+        try (JsonReader reader = Json.createReader(inputMessage.getBody())) {
+            return Json.createMergePatch(reader.readValue());
+        } catch (Exception e) {
+            throw new HttpMessageNotReadableException(e.getMessage(), inputMessage);
+        }
+    }
+
+    @Override
+    protected void writeInternal(JsonMergePatch jsonMergePatch, HttpOutputMessage outputMessage)
+            throws HttpMessageNotWritableException {
+
+        try (JsonWriter writer = Json.createWriter(outputMessage.getBody())) {
+            writer.write(jsonMergePatch.toJsonValue());
+        } catch (Exception e) {
+            throw new HttpMessageNotWritableException(e.getMessage(), e);
+        }
+    }
+}
+```
 
 ## Creating the controller endpoints
 
@@ -98,3 +176,4 @@ JSON-P 1.1 is, however, just an API (see the [`javax.json`][javax.json] package 
   [johnzon]: https://johnzon.apache.org/
   [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
   [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
+  [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
