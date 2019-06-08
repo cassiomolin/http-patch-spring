@@ -79,7 +79,7 @@ public class ContactController {
      * @param patchDocument JSON Patch document
      * @return HTTP response with the 204 status code if the operation completed successfully
      */
-    @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+    @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_JSON_PATCH_VALUE)
     public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                               @RequestBody JsonPatch patchDocument) {
 
