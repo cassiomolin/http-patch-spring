@@ -4,18 +4,62 @@ This article describes an approach to support HTTP `PATCH` for performing partia
 
 ## The problem with `PUT` and the need for `PATCH`
 
-The `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the documents that currently define the HTTP/1.1 protocol:
+Consider, for example, we are creating an API to manage contacts. On the server, we have a resource that can be represented with the following JSON document:
+
+```json
+{
+  "id": 1,
+  "name": "John Appleseed",
+  "work": {
+    "title": "Engineer",
+    "company": "Acme"
+  },
+  "phones": [
+    {
+      "phone": "0000000000",
+      "type": "mobile"
+    }
+  ]
+}
+```
+
+Now consider we want to update this contact. John has been promoted as a senior engineer and we want to keep our contact list updated. We could do it with a `PUT` request:
+
+```http
+PUT /contacts/1 HTTP/1.1
+Host: example.org
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "John Appleseed",
+  "work": {
+    "title": "Senior Engineer",
+    "company": "Acme"
+  },
+  "phones": [
+    {
+      "phone": "0000000000",
+      "type": "mobile"
+    }
+  ]
+}
+```
+
+With `PUT`, we have to send the full representation of the resource even when we need to update a _single_ field of a resource, which may not be desirable.
+
+Let's have a look at how the `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the documents that currently define the HTTP/1.1 protocol:
 
 >[**4.3.4.  PUT**][put]
 >
 >The `PUT` method requests that the state of the target resource be created or replaced with the state defined by the representation enclosed in the request message payload. [...]
 
-So `PUT` is meant for two things:
+As per definition, the `PUT` method can be used to:
 
-- Creating resources <sup>*</sup>
-- Replacing the state of a given resource.
+- Create resources <sup>*</sup> or;
+- Replace the state of a given resource.
  
-As per definition, the `PUT` method is not meant for performing _partial modifications_ to a resource. And, to fill this gap, the `PATCH` method was created. It is currently defined in the [RFC 5789][rfc5789]:
+It's not meant for performing _partial modifications_ to a resource. To fill this gap, the `PATCH` method was created. It is currently defined in the [RFC 5789][rfc5789]:
 
 > [**2. The PATCH Method**][patch]
 >
@@ -25,8 +69,6 @@ The difference between the `PUT` and `PATCH` requests is reflected in the way th
 
 - In a `PUT` request, the payload is a modified version of the resource stored on the server. And the client is requesting the stored version to be _replaced_ with the new version.
 - In a `PATCH` request, the request payload contains a set of instructions describing how a resource currently stored on the server should be modified to produce a new version.
-
-So the `PATCH` method is suitable for performing _partial modifications_ to a resource (while `PUT` is not).
 
 ## Describing how the resource will be modified
 
@@ -56,6 +98,8 @@ JSON-P 1.1, also known as Java API for JSON Processing, brought official support
 
 - [`JsonPatch`][javax.json.JsonPatch]: Represents an implementation of JSON Patch
 - [`JsonMergePatch`][javax.json.JsonMergePatch]: Represents an implementation of JSON Merge Patch
+
+(add examples)
 
 JSON-P 1.1 is, however, just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
 
@@ -179,8 +223,6 @@ Whith HTTP message converters in place, we can receive [`JsonPatch`][javax.json.
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonPatch patchDocument) {
     ...
-    
-    return ResponseEntity.noContent().build();
 }
 ```
 
@@ -189,8 +231,6 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonMergePatch mergePatchDocument) {
     ...
-    
-    return ResponseEntity.noContent().build();
 }
 ```
 
@@ -258,6 +298,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     // Persist the changes
     service.updateContact(patched);
 
+    // Return 204 to indicate the operation has succeeded
     return ResponseEntity.noContent().build();
 }
 ```
@@ -278,6 +319,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     // Persist the changes
     service.updateContact(patched);
 
+    // Return 204 to indicate the operation has succeeded
     return ResponseEntity.noContent().build();
 }
 ```
