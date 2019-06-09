@@ -391,13 +391,13 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonPatch patchDocument) {
 
     // Find the model that will be patched
-    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Apply the patch
     Contact patched = patch(patchDocument, contact, Contact.class);
     
     // Persist the changes
-    service.updateContact(patched);
+    contactService.updateContact(patched);
 
     // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
@@ -412,13 +412,13 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonMergePatch mergePatchDocument) {
 
     // Find the model that will be patched
-    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Apply the patch
     Contact patched = mergePatch(mergePatchDocument, contact, Contact.class);
     
     // Persist the changes
-    service.updateContact(patched);
+    contactService.updateContact(patched);
 
     // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
@@ -466,13 +466,13 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 
 ## Bonus: Decoupling the domain model from the API model
 
-The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model. 
+The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model.<sup>**</sup> 
 
-While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models <sup>**</sup>. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve it when the things are decoupled.
+While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of the API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve when the things are _decoupled_.
 
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. And we also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
-By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
+By decoupling the API model from domain model, we also can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
 
 In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`. To convert between these two models with MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
 
@@ -480,36 +480,27 @@ In this example, the domain model class is called `Contact` and the model class 
 @Mapper(componentModel = "spring")
 public interface ContactMapper {
 
-    Contact asContact(ContactResourceInput resourceInput);
-
+    /**
+    * Map an instance of {@code Contact} to an instance of {@code ContactResourceInput}.
+    * 
+    * @param contact
+    * @return 
+    */
     ContactResourceInput asInput(Contact contact);
 
+    /**
+    * Update an instance of {@code Contact} with data from an instance of {@code ContactResourceInput}.
+    * 
+    * @param resourceInput
+    * @param contact 
+    */
     void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
 }
 ```  
 
 The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. Instead, it creates an actual implementation for the mapper interface and we can even check the code if we want to.
 
-For comparision purposes, a controller method for handling `PUT` request could be implemented as follows:
-
-```java
-@PutMapping(path = "/{id}", consumes = "application/json")
-public ResponseEntity<Void> updateContact(@PathVariable Long id,
-                                          @RequestBody @Valid ContactResourceInput resourceInput) {
-
-    // Find the domain model that will be updated
-    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-    
-    // Update the domain model with the details from the API resource model
-    mapper.update(resourceInput, contact);
-    
-    // Persist the changes
-    service.updateContact(contact);
-
-    // Return 204 to indicate the request has succeeded
-    return ResponseEntity.noContent().build();
-}
-```
+Once the `ContactMapper` is injected in our controller, 
 
 And, finally, here's what the controller method for handling `PATCH` requests with JSON Patch could be like:
 
@@ -519,19 +510,40 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonPatch patchDocument) {
 
     // Find the domain model that will be patched
-    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Map the domain model to an API resource model
-    ContactResourceInput resourceInput = mapper.asInput(contact);
+    ContactResourceInput resourceInput = contactMapper.asInput(contact);
     
     // Apply the patch to the API resource model
     ContactResourceInput patched = patch(patchDocument, resourceInput, ContactResourceInput.class);
 
      // Update the domain model with the details from the API resource model
-    mapper.update(patched, contact);
+    contactMapper.update(patched, contact);
     
     // Persist the changes
-    service.updateContact(contact);
+    contactService.updateContact(contact);
+
+    // Return 204 to indicate the request has succeeded
+    return ResponseEntity.noContent().build();
+}
+```
+
+For comparision purposes, here's a controller method for handling `PUT` request:
+
+```java
+@PutMapping(path = "/{id}", consumes = "application/json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody @Valid ContactResourceInput resourceInput) {
+
+    // Find the domain model that will be updated
+    Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    
+    // Update the domain model with the details from the API resource model
+    contactMapper.update(resourceInput, contact);
+    
+    // Persist the changes
+    contactService.updateContact(contact);
 
     // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
