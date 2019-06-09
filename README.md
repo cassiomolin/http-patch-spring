@@ -138,11 +138,11 @@ JSON-P 1.0, defined in the JSR 353 and also known as _Java API for JSON Processi
 
 Let's have a quick look at the API to start getting familiar with it: 
 
-- `Json`: Factory class for creating JSON processing objects
-- [`JsonPatch`][javax.json.JsonPatch]: Represents an implementation of JSON Patch
-- [`JsonMergePatch`][javax.json.JsonMergePatch]: Represents an implementation of JSON Merge Patch
-- `JsonValue`: represents an immutable JSON value. It can be an object (`JsonObject`), an array (`JsonArray`), a number (`JsonNumber`), a string (`JsonString`), `true` (`JsonValue.TRUE`), false (`JsonValue.FALSE`), or `null` (`JsonValue.NULL`).
-- `JsonStructure`: Super type for the two structured types in JSON: object (`JsonObject`) and array (`JsonArray`)
+| `Json` | Factory class for creating JSON processing objects |
+| [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
+| [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
+| `JsonValue` | represents an immutable JSON value. It can be an object (`JsonObject`), an array (`JsonArray`), a number (`JsonNumber`), a string (`JsonString`), `true` (`JsonValue.TRUE`), false (`JsonValue.FALSE`), or `null` (`JsonValue.NULL`) |
+| `JsonStructure` | Super type for the two structured types in JSON: object (`JsonObject`) and array (`JsonArray`) |
 
 To patch using JSON Patch, we would have the following: 
 
