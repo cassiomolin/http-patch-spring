@@ -35,7 +35,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Now consider we want to update this resource. John has been promoted as a senior engineer and we want to keep our contact list updated. We could achieve it with a `PUT` request:
+Now consider we want to update this resource, as John has been promoted to a senior engineer and we want to keep our contact list updated. We could perform this update with a `PUT` request:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -90,7 +90,15 @@ Let's have a look at some formats for describing how a resource is to be `PATCH`
 
 ### JSON Patch
 
-JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
+JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type:
+
+> JSON Patch is a format (identified by the media type `application/json-patch+json`) for expressing a sequence of operations to apply to a target JSON document; it is suitable for use with the HTTP `PATCH` method.
+
+> A JSON Patch document is a JSON document that represents an array of objects.  Each object represents a single operation to be applied to the target JSON document.
+
+> Evaluation of a JSON Patch document begins against a target JSON document.  Operations are applied sequentially in the order they appear in the array.  Each operation in the sequence is applied to the target document; the resulting document becomes the target of the next operation.  Evaluation continues until all operations are successfully applied or until an error condition is encountered.
+
+> Operation objects MUST have exactly one `op` member, whose value indicates the operation to perform.  Its value MUST be one of `add`, `remove`, `replace`, `move`, `copy`, or `test`; other values are errors.
 
 A request to update the John's job title could be as follows:
 
@@ -106,7 +114,9 @@ Content-Type: application/json-patch+json
 
 ### JSON Merge Patch
 
-JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document. It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
+JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document. It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type:
+
+> A JSON merge patch document describes changes to be made to a target JSON document using a syntax that closely mimics the document being modified.  Recipients of a merge patch document determine the exact set of changes being requested by comparing the content of the provided patch against the current content of the target document. If the provided merge patch contains members that do not appear within the target, those members are added.  If the target does contain the member, the value is replaced.  Null values in the merge patch are given special meaning to indicate the removal of existing values in the target.
 
 A request to update the John's job title could be as follows:
 
@@ -140,7 +150,7 @@ JsonPatch jsonPatch = Json.createPatchBuilder()
         .replace("/work/title", "Senior Engineer")
         .build();
 
-// Apply patch to the target document
+// Apply the patch to the target document
 JsonValue patched = jsonPatch.apply(target);
 ```
 
@@ -156,7 +166,7 @@ JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
                 .add("title", "Senior Engineer"))
         .build());
 
-// Apply patch to the target document
+// Apply the patch to the target document
 JsonValue patched = mergePatch.apply(target);
 ```
 
@@ -174,7 +184,7 @@ Having said that, let me highlight that JSON-P 1.1 is just an API (see the [`jav
 
 For an incoming request with the `application/json-patch+json` content type, we want to read the payload as an instance of [`JsonPatch`][javax.json.JsonPatch]. And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
 
-Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
+Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
 
 For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and then annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
 
@@ -193,7 +203,7 @@ public JsonPatchHttpMessageConverter() {
 }
 ```
 
-Here's how we indicated that our converter will support the [`JsonPatch`][javax.json.JsonPatch] class:
+We indicate that our converter supports the [`JsonPatch`][javax.json.JsonPatch] class:
 
 ```java
 @Override
@@ -202,7 +212,7 @@ protected boolean supports(Class<?> clazz) {
 }
 ```
 
-Then we implement the method that will the HTTP request payload and convert it to a [`JsonPatch`][javax.json.JsonPatch] instance:
+Then we implement the method that will read the HTTP request payload and convert it to a [`JsonPatch`][javax.json.JsonPatch] instance:
 
 ```java
 @Override
@@ -295,7 +305,12 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 It is worth it to mention that both JSON Patch and JSON Merge Patch operate over JSON documents. 
 
-So, to apply the patch to Java beans, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then we apply the patch to it and convert the patched document back to a Java bean.
+So, to apply the patch to a Java bean, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then we apply the patch to it and convert the patched document back to a Java bean:
+
+<!-- Hack to center the image in GitHub -->
+<p align="center">
+  <img src="misc/patch-conversions.png" alt="Patch conversions" width="65%"/>
+</p>
 
 These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types, so that we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing:
 
@@ -420,17 +435,17 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-But we also should go further and, as a good practice, _decouple_ the domain model from the API model <sup>**</sup>.
+But we also should go further and, as a good practice, we should _decouple_ the domain model from the API model <sup>**</sup>.
 
 ## Bonus: Decoupling the domain model from the API model
 
-The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field in the application domain model. 
+The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model. 
 
-While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of our API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. It's perfectly possible to achieve it when the things are decoupled.
+While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve it when the things are decoupled.
 
-To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. We also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
+To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. And we also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
-By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our contact. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
+By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
 
 In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`.
 
@@ -450,17 +465,17 @@ public interface ContactMapper {
 
 The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. MapStruct creates an actual implementation for the mapper interface and we can even check the code if we want to.
 
-A controller method for handling `PUT` request can be implemented as follows:
+For comparision purposes, a controller method for handling `PUT` request could be implemented as follows:
 
 ```java
 @PutMapping(path = "/{id}", consumes = "application/json")
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody @Valid ContactResourceInput resourceInput) {
 
-    // Find the model that will be patched
+    // Find the domain model that will be updated
     Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
-    // Update the domain model with the details from the resource
+    // Update the domain model with the details from the API resource model
     mapper.update(resourceInput, contact);
     
     // Persist the changes
@@ -478,16 +493,16 @@ And, finally, here's what the controller method for handling `PATCH` requests wi
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                           @RequestBody JsonPatch patchDocument) {
 
-    // Find the model that will be patched
+    // Find the domain model that will be patched
     Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
-    // Map the model to an API resource model
+    // Map the domain model to an API resource model
     ContactResourceInput resourceInput = mapper.asInput(contact);
     
     // Apply the patch to the API resource model
     ContactResourceInput patched = patch(patchDocument, resourceInput, ContactResourceInput.class);
 
-     // Update the domain model with the details from the resource API model
+     // Update the domain model with the details from the API resource model
     mapper.update(patched, contact);
     
     // Persist the changes
