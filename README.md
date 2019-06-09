@@ -371,19 +371,24 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Validating the patch
 
-Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an invalid state. 
+Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an _invalid_ state. We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model. <sup>**</sup>.
 
-We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model. Exposing our domain model directly in the API may break the clients when changes are made to the domain model. That's why we should introduce a new set of models only for the API <sup>**</sp>.
+The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field in the application domain model. 
+
+While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of our API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. It's perfectly possible to achieve it when the things are decoupled.
 
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. We also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
-(to be continued)
+By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our contact. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
+
+[to be continued]
 
 ---
 
 <sup>*</sup> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this.
 
-<sup>**</sup> I have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow.
+<sup>**</sup> I also have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow.
+
 
   [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
   [patch]: https://tools.ietf.org/html/rfc5789#section-2
