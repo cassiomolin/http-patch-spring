@@ -134,10 +134,15 @@ Content-Type: application/merge-patch+json
 
 ## JSON-P: Java API for JSON Processing
 
-JSON-P 1.1, also known as Java API for JSON Processing, brought official support for JSON Patch and JSON Merge Patch to Java EE: 
+JSON-P 1.0, defined in the JSR 353 and also known as _Java API for JSON Processing_ 1.0, brought official support for JSON processing in Java EE. JSON-P 1.1, defined in the JSR 374, introduced support for JSON Patch and JSON Merge Patch formats to Java EE.
 
+Let's have a quick look at the API to start getting familiar with it: 
+
+- `Json`: Factory class for creating JSON processing objects
 - [`JsonPatch`][javax.json.JsonPatch]: Represents an implementation of JSON Patch
 - [`JsonMergePatch`][javax.json.JsonMergePatch]: Represents an implementation of JSON Merge Patch
+- `JsonValue`: represents an immutable JSON value. It can be an object (`JsonObject`), an array (`JsonArray`), a number (`JsonNumber`), a string (`JsonString`), `true` (`JsonValue.TRUE`), false (`JsonValue.FALSE`), or `null` (`JsonValue.NULL`).
+- `JsonStructure`: Super type for the two structured types in JSON: object (`JsonObject`) and array (`JsonArray`)
 
 To patch using JSON Patch, we would have the following: 
 
@@ -174,9 +179,9 @@ Having said that, let me highlight that JSON-P 1.1 is just an API (see the [`jav
 
 ```xml
 <dependency>
-  <groupId>org.apache.johnzon</groupId>
-  <artifactId>johnzon-core</artifactId>
-  <version>${johnzon.version}</version>
+    <groupId>org.apache.johnzon</groupId>
+    <artifactId>johnzon-core</artifactId>
+    <version>${johnzon.version}</version>
 </dependency>
 ```
 
@@ -312,7 +317,7 @@ So, to apply the patch to a Java bean, we first need to convert the Java bean to
   <img src="misc/patch-conversions.png" alt="Patch conversions" width="100%"/>
 </p>
 
-These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types, so that we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing:
+These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types. With this extension module, we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing, taking advantage of the powerful data-binding features that Jackson provides:
 
 ```xml
 <dependency>
@@ -322,7 +327,7 @@ These conversions could be handled by Jackson, which provides an [extension modu
 </dependency>
 ```
 
-With de dependency on the classpath, we configure the `ObjectMapper` and expose it as a Spring `@Bean` (so it can be picked up by String and can be injected in other Spring beans):  
+With module extension dependency on the classpath, we can configure the `ObjectMapper` and expose it as a Spring `@Bean` (so it can be picked up by String and can be injected in other Spring beans):  
 
 ```java
 @Bean
@@ -335,9 +340,13 @@ public ObjectMapper objectMapper() {
 }
 ```
 
-The `findAndRegisterModules()` method is important here: it tells Jackson to search and register the any modules found in the classpath, including the [`jackson-datatype-jsr353`][jackson-datatype-jsr353] extension module.
+The `findAndRegisterModules()` method is important here: it tells Jackson to search and register the any modules found in the classpath, including the [`jackson-datatype-jsr353`][jackson-datatype-jsr353] extension module. Alternatively, we can register the module manually: 
 
-Then we can create a method to apply the JSON Patch to a Java bean, where `mapper` is an instance of `ObjectMapper`:
+```java
+mapper.registerModule(new JSR353Module());
+```
+
+Once the `ObjectMapper` is configured, we can inject it in our Spring beans and create a method to apply the JSON Patch to a Java bean:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -450,13 +459,11 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-But we also should go further and, as a good practice, we should _decouple_ the domain model from the API model <sup>**</sup>.
-
 ## Bonus: Decoupling the domain model from the API model
 
 The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model. 
 
-While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve it when the things are decoupled.
+While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models <sup>**</sup>. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve it when the things are decoupled.
 
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. And we also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
