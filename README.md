@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring MVC
 
-This project demonstrates an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC with Spring Boot.
+This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial updates to resources in Spring MVC with Spring Boot.
 
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
@@ -35,7 +35,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Now consider we want to update this resource, as John has been promoted to a senior engineer and we want to keep our contact list updated. We could perform this update with a `PUT` request:
+Now consider we want to update this resource, as John has been promoted to senior engineer and we want to keep our contact list updated. We could perform this update with a `PUT` request:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -138,6 +138,8 @@ JSON-P 1.0, defined in the JSR 353 and also known as _Java API for JSON Processi
 
 Let's have a quick look at the API to start getting familiar with it: 
 
+| Type | Description |
+| ---- | ----------- |
 | `Json` | Factory class for creating JSON processing objects |
 | [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
 | [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
