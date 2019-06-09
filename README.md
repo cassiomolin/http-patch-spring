@@ -2,6 +2,18 @@
 
 Here I intend to describe an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC.
 
+##### Table of Contents  
+- [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
+- [Describing how the resource will be modified](#describing-how-the-resource-will-be-modified)
+- [JSON Patch](#json-patch)
+  - [JSON Merge Patch](#json-merge-patch)
+  - [JSON-P: Java API for JSON Processing](#json-p-java-api-for-json-processing)
+- [Parsing the request payload](#parsing-the-request-payload)
+- [Creating the controller endpoints](#creating-the-controller-endpoints)
+- [Applying the patch](#applying-the-patch)
+- [Validating the patch](#validating-the-patch)
+- [Bonus: Decoupling the domain model from the API model](#bonus-decoupling-the-domain-model-from-the-api-model)
+
 ## The problem with `PUT` and the need for `PATCH`
 
 Consider, for example, we are creating an API to manage contacts. On the server, we have a resource that can be represented with the following JSON document:
@@ -311,7 +323,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-And here's what the method to apply a JSON Merge Patch:
+And here's the method to apply a JSON Merge Patch:
 
 ```java
 public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanClass) {
@@ -327,7 +339,7 @@ public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanCl
 }
 ```
 
-Having said that, the method controller implementation for JSON Patch could be like:
+Having said that, the method controller method implementation for JSON Patch could be like:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
@@ -371,7 +383,46 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Validating the patch
 
-Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an _invalid_ state. We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model <sup>**</sup>.
+Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an _invalid_ state. We could use [Bean Validation annotations][javax.validation.constraints] to define constraints and then ensure that the state of the model is valid. 
+
+```java
+public class Contact {
+
+    @NotBlank
+    private String name;
+    
+    ...
+}
+```
+
+The method to apply the patch could be updated to handle the validation as well, as shown below:
+
+```java
+public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
+    
+    // Convert the Java bean to a JSON document
+    JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
+    
+    // Apply the JSON Patch to the JSON document
+    JsonValue patched = applyPatch(patch, target);
+
+    // Convert the JSON document to a Java bean
+    T patchedBean = mapper.convertValue(patched, beanClass);
+
+    // Validate the Java bean and throw an excetion if any constraint has been violated
+    Set<ConstraintViolation<T>> violations = validator.validate(patchedBean);
+    if (!violations.isEmpty()) {
+        throw new ConstraintViolationException(violations);
+    }
+
+    // Return the patched bean
+    return patchedBean;
+}
+```
+
+But we also should go further and, as a good practice, _decouple_ the domain model from the API model <sup>**</sup>.
+
+### Bonus: Decoupling the domain model from the API model
 
 The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field in the application domain model. 
 
@@ -425,3 +476,4 @@ The `ContactMapper` implementation will be exposed as a Spring `@Component`, so 
   [org.springframework.stereotype.Component]: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/stereotype/Component.html
   [mapstruct]: http://mapstruct.org/
   [lombok]: https://projectlombok.org/
+  [javax.validation.constraints]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/constraints/package-summary.html
