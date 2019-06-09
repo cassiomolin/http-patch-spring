@@ -373,11 +373,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an invalid state. 
 
-(to be continued)
-
-### Decoupling the domain model from the API model
-
-As a good practice, we should _decouple_ the domain model from the API model. Exposing our domain model directly in the API may break the clients when changes are made to the domain model. That's why we should introduce a new set of models only for the API <sup>**</sp>.
+We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model. Exposing our domain model directly in the API may break the clients when changes are made to the domain model. That's why we should introduce a new set of models only for the API <sup>**</sp>.
 
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. We also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
