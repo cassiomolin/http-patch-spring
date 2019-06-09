@@ -54,12 +54,12 @@ Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7
 >
 >The `PUT` method requests that the state of the target resource be created or replaced with the state defined by the representation enclosed in the request message payload. [...]
 
-As per definition, the `PUT` method is meant to be used for:
+So, as per definition, the `PUT` method is meant to be used for:
 
 - Creating resources <sup>*</sup> and/or;
 - Replacing the state of a given resource.
  
-It's not meant for performing _partial modifications_ to resource. To fill this gap, the `PATCH` method was created a it is currently defined in the [RFC 5789][rfc5789]:
+It's not meant for performing _partial modifications_ to resource at all. To fill this gap, the `PATCH` method was created and it is currently defined in the [RFC 5789][rfc5789]:
 
 > [**2. The PATCH Method**][patch]
 >
@@ -74,7 +74,7 @@ The difference between the `PUT` and `PATCH` requests is reflected in the way th
 
 The `PATCH` method definition, however, doesn't enforce any format for the request payload apart from mentioning that the request payload should contain a set of instructions describing how the resource will be modified and that set of instructions is identified by a media type.
 
-Let's have a look at some formats for describing how a resource will be `PATCH`ed:
+Let's have a look at some formats for describing how a resource is to be `PATCH`ed:
 
 ### JSON Patch
 
@@ -110,7 +110,7 @@ Content-Type: application/merge-patch+json
 }
 ```
 
-## Java API for JSON Processing
+## JSON-P: Java API for JSON Processing
 
 JSON-P 1.1, also known as Java API for JSON Processing, brought official support for JSON Patch and JSON Merge Patch to Java EE: 
 
@@ -148,7 +148,7 @@ JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
 JsonValue patched = mergePatch.apply(target);
 ```
 
-Having said that, it's important to mention that JSON-P 1.1 is only an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+Having said that, let me highlight that JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
 
 ```xml
 <dependency>
@@ -160,13 +160,11 @@ Having said that, it's important to mention that JSON-P 1.1 is only an API (see 
 
 ## Parsing the request payload
 
-For an incoming request with the `application/json-patch+json` content type, we want to read the payload as an instance of [`JsonPatch`][javax.json.JsonPatch]. 
-
-And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
+For an incoming request with the `application/json-patch+json` content type, we want to read the payload as an instance of [`JsonPatch`][javax.json.JsonPatch]. And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
 
 Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
 
-For convenience, let's extend `AbstractHttpMessageConverter` and annotate our implementation with `@Component`, so Spring can pick it up:
+For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
 
 ```java
 @Component
@@ -175,7 +173,7 @@ public class JsonPatchHttpMessageConverter extends AbstractHttpMessageConverter<
 }
 ```
 
-Our constructor will invoke the parent's constructor indicating the supported media type:
+The constructor will invoke the parent's constructor indicating the supported media type:
 
 ```java
 public JsonPatchHttpMessageConverter() {
@@ -222,7 +220,7 @@ protected void writeInternal(JsonPatch jsonPatch, HttpOutputMessage outputMessag
 }
 ```
 
-The [`JsonMergePatch`][javax.json.JsonMergePatch] message converter is pretty much the same:
+The message converter for [`JsonMergePatch`][javax.json.JsonMergePatch] is pretty much the same as the converter described above (except for the types handled by the converter):
 
 ```java
 @Component
@@ -263,7 +261,7 @@ public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConve
 
 ## Creating the controller endpoints
 
-Whith HTTP message converters in place, we can receive [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch] as method arguments in our controller methods, annotated with [`@RequestBody`][org.springframework.web.bind.annotation.RequestBody]:
+With the HTTP message converters in place, we can receive [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch] as method arguments in our controller methods, annotated with [`@RequestBody`][org.springframework.web.bind.annotation.RequestBody]:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
@@ -283,9 +281,9 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Applying the patch
 
-It's important to keep in mind that both JSON Patch and JSON Merge Patch operate over JSON documents. 
+It is worth it to mention that both JSON Patch and JSON Merge Patch operate over JSON documents. 
 
-So, to apply the patch to Java beans, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then apply the patch to it and convert the patched document back to a Java bean.
+So, to apply the patch to Java beans, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then we apply the patch to it and convert the patched document back to a Java bean.
 
 These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types, so that we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing:
 
@@ -313,7 +311,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-And here's what the method to apply a JSON Merge Patch could be like:
+And here's what the method to apply a JSON Merge Patch:
 
 ```java
 public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanClass) {
@@ -329,7 +327,7 @@ public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanCl
 }
 ```
 
-And here's what the method controller implementation will be like:
+Having said that, the method controller implementation for JSON Patch could be like:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
@@ -350,7 +348,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 }
 ```
 
-For JSON Merge Patch, it's pretty much the same:
+And the implementation is quite similar for JSON Merge Patch (except for the media type and for the types handled by the method):
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/merge-patch+json")
@@ -373,11 +371,23 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Validating the patch
 
-(coming soon)
+Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an invalid state. 
+
+(to be continued)
+
+### Decoupling the domain model from the API model
+
+As a good practice, we should _decouple_ the domain model from the API model. Exposing our domain model directly in the API may break the clients when changes are made to the domain model. That's why we should introduce a new set of models only for the API <sup>**</sp>.
+
+To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. We also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
+ 
+(to be continued)
 
 ---
 
-<sup>*</sup> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See [my answer][so.56241060] on Stack Overflow for details on this.
+<sup>*</sup> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this.
+
+<sup>**</sup> I have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow.
 
   [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
   [patch]: https://tools.ietf.org/html/rfc5789#section-2
@@ -386,6 +396,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [rfc6902]: https://tools.ietf.org/html/rfc6902
   [rfc7396]: https://tools.ietf.org/html/rfc7396
   [so.56241060]: https://stackoverflow.com/a/56241060/1426227
+  [so.36175349]: https://stackoverflow.com/a/36175349/1426227
   [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
   [johnzon]: https://johnzon.apache.org/
   [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
@@ -393,3 +404,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
   [org.springframework.web.bind.annotation.RequestBody]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestBody.html
   [jackson-datatype-jsr353]: https://github.com/FasterXML/jackson-datatype-jsr353
+  [org.springframework.http.converter.AbstractHttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/AbstractHttpMessageConverter.html
+  [org.springframework.stereotype.Component]: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/stereotype/Component.html
+  [mapstruct]: http://mapstruct.org/
+  [lombok]: https://projectlombok.org/
