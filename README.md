@@ -100,7 +100,7 @@ JSON Patch is a format for expressing a sequence of operations to be applied to 
 
 > Operation objects MUST have exactly one `op` member, whose value indicates the operation to perform.  Its value MUST be one of `add`, `remove`, `replace`, `move`, `copy`, or `test`; other values are errors.
 
-A request to update the John's job title could be as follows:
+A request to update John's job title could be:
 
 ```http
 PATCH /contacts/1 HTTP/1.1
@@ -118,7 +118,7 @@ JSON Merge Patch defines a format and processing rules for applying operations t
 
 > A JSON merge patch document describes changes to be made to a target JSON document using a syntax that closely mimics the document being modified.  Recipients of a merge patch document determine the exact set of changes being requested by comparing the content of the provided patch against the current content of the target document. If the provided merge patch contains members that do not appear within the target, those members are added.  If the target does contain the member, the value is replaced.  Null values in the merge patch are given special meaning to indicate the removal of existing values in the target.
 
-A request to update the John's job title could be as follows:
+A request to update John's job title could be:
 
 ```http
 PATCH /contacts/1 HTTP/1.1
@@ -143,7 +143,7 @@ Let's have a quick look at the API to start getting familiar with it:
 | `Json` | Factory class for creating JSON processing objects |
 | [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
 | [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
-| `JsonValue` | represents an immutable JSON value. It can be an object (`JsonObject`), an array (`JsonArray`), a number (`JsonNumber`), a string (`JsonString`), `true` (`JsonValue.TRUE`), false (`JsonValue.FALSE`), or `null` (`JsonValue.NULL`) |
+| `JsonValue` | Represents an immutable JSON value. It can be an _object_ (`JsonObject`), an _array_ (`JsonArray`), a _number_ (`JsonNumber`), a _string_ (`JsonString`), _`true`_ (`JsonValue.TRUE`), _`false`_ (`JsonValue.FALSE`), or _`null`_ (`JsonValue.NULL`) |
 | `JsonStructure` | Super type for the two structured types in JSON: object (`JsonObject`) and array (`JsonArray`) |
 
 To patch using JSON Patch, we would have the following: 
@@ -177,7 +177,7 @@ JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
 JsonValue patched = mergePatch.apply(target);
 ```
 
-Having said that, let me highlight that JSON-P 1.1 is just an API (see the [`javax.json`][javax.json] package for reference). If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+Having said that, let me highlight that JSON-P is just an API. If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
 
 ```xml
 <dependency>
@@ -189,11 +189,14 @@ Having said that, let me highlight that JSON-P 1.1 is just an API (see the [`jav
 
 ## Parsing the request payload
 
-For an incoming request with the `application/json-patch+json` content type, we want to read the payload as an instance of [`JsonPatch`][javax.json.JsonPatch]. And for an incoming request with the `application/merge-patch+json` content type, we want to read the payload as an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
+To parse a `PATCH` request payload, we must take the following into account:
+
+- For an incoming request with the `application/json-patch+json` content type, the payload must be converted to an instance of [`JsonPatch`][javax.json.JsonPatch].
+- For an incoming request with the `application/merge-patch+json` content type, the payload must be converted to an instance of [`JsonMergePatch`][javax.json.JsonMergePatch].
 
 Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
 
-For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and then annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
+For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
 
 ```java
 @Component
@@ -471,9 +474,7 @@ To minimize the boilerplate code of converting the domain model to the API model
  
 By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
 
-In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`.
-
-With MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
+In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`. To convert between these two models with MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
 
 ```java
 @Mapper(componentModel = "spring")
@@ -487,7 +488,7 @@ public interface ContactMapper {
 }
 ```  
 
-The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. MapStruct creates an actual implementation for the mapper interface and we can even check the code if we want to.
+The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. Instead, it creates an actual implementation for the mapper interface and we can even check the code if we want to.
 
 For comparision purposes, a controller method for handling `PUT` request could be implemented as follows:
 
