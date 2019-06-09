@@ -371,7 +371,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ## Validating the patch
 
-Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an _invalid_ state. We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model. <sup>**</sup>.
+Once the patch has been applied and before persisting the changes, we must ensure that the patch didn't lead the resource to an _invalid_ state. We could use Bean Validation annotations to ensure that the state of the model is valid. But we also should go further and, as a good practice, _decouple_ the domain model from the API model <sup>**</sup>.
 
 The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field in the application domain model. 
 
@@ -380,6 +380,22 @@ While our service layer operates over the domain/persistence models, our API con
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. We also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
 By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our contact. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
+
+With MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
+
+```java
+@Mapper(componentModel = "spring")
+public interface ContactMapper {
+
+    Contact asContact(ContactResourceInput resourceInput);
+
+    ContactResourceInput asInput(Contact contact);
+
+    void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
+}
+```
+
+The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans.
 
 [to be continued]
 
