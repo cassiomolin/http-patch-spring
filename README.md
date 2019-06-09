@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring MVC
 
-This project demonstrates an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC.
+This project demonstrates an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC with Spring Boot.
 
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
@@ -322,7 +322,22 @@ These conversions could be handled by Jackson, which provides an [extension modu
 </dependency>
 ```
 
-Here's what the method to apply a JSON Patch could be like:
+With de dependency on the classpath, we configure the `ObjectMapper` and expose it as a Spring `@Bean` (so it can be picked up by String and can be injected in other Spring beans):  
+
+```java
+@Bean
+public ObjectMapper objectMapper() {
+    return new ObjectMapper()
+            .setDefaultPropertyInclusion(Include.NON_NULL)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .findAndRegisterModules();
+}
+```
+
+The `findAndRegisterModules()` method is important here: it tells Jackson to search and register the any modules found in the classpath, including the [`jackson-datatype-jsr353`][jackson-datatype-jsr353] extension module.
+
+Then we can create a method to apply the JSON Patch to a Java bean, where `mapper` is an instance of `ObjectMapper`:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -338,7 +353,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-And here's the method to apply a JSON Merge Patch:
+And here's the method to patch using JSON Merge Patch:
 
 ```java
 public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanClass) {
@@ -354,7 +369,7 @@ public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanCl
 }
 ```
 
-Having said that, the method controller method implementation for JSON Patch could be like:
+With this in place, the controller method implementation for JSON Patch could be like:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
@@ -375,7 +390,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 }
 ```
 
-And the implementation is quite similar for JSON Merge Patch (except for the media type and for the types handled by the method):
+And the implementation is quite similar for JSON Merge Patch, except for the media type and for the types handled by the method:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/merge-patch+json")
