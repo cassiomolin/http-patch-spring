@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring MVC
 
-Here I intend to describe an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC.
+This project demonstrates an approach to support HTTP `PATCH` with JSON Patch and JSON Merge Patch for performing partial updates to resources in Spring MVC.
 
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
@@ -176,7 +176,7 @@ For an incoming request with the `application/json-patch+json` content type, we 
 
 Spring MVC, however, doesn't know how to create instances of [`JsonPatch`][javax.json.JsonPatch] or [`JsonMergePatch`][javax.json.JsonMergePatch]. So we need to provide a custom [`HttpMessageConverter<T>`][org.springframework.http.converter.HttpMessageConverter] for each type. Fortunately it's pretty straightforward.
 
-For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
+For convenience, let's extend [`AbstractHttpMessageConverter<T>`][org.springframework.http.converter.AbstractHttpMessageConverter] and then annotate the implementation with [`@Component`][org.springframework.stereotype.Component], so Spring can pick it up:
 
 ```java
 @Component
@@ -185,7 +185,7 @@ public class JsonPatchHttpMessageConverter extends AbstractHttpMessageConverter<
 }
 ```
 
-The constructor will invoke the parent's constructor indicating the supported media type:
+The constructor will invoke the parent's constructor indicating the supported media type for this converter:
 
 ```java
 public JsonPatchHttpMessageConverter() {
@@ -193,7 +193,7 @@ public JsonPatchHttpMessageConverter() {
 }
 ```
 
-Then we indicate that this converted will support the [`JsonPatch`][javax.json.JsonPatch] class:
+Here's how we indicated that our converter will support the [`JsonPatch`][javax.json.JsonPatch] class:
 
 ```java
 @Override
@@ -202,7 +202,7 @@ protected boolean supports(Class<?> clazz) {
 }
 ```
 
-Then we'll implement how the converter will read the HTTP request payload and convert it to a [`JsonPatch`][javax.json.JsonPatch] instance:
+Then we implement the method that will the HTTP request payload and convert it to a [`JsonPatch`][javax.json.JsonPatch] instance:
 
 ```java
 @Override
@@ -217,7 +217,7 @@ protected JsonPatch readInternal(Class<? extends JsonPatch> clazz, HttpInputMess
 }
 ```
 
-It's unlikely we'll write [`JsonPatch`][javax.json.JsonPatch] instances to the responses, but we could implement it as follows:
+It's unlikely we'll need to write [`JsonPatch`][javax.json.JsonPatch] instances to the responses, but we could implement it as follows:
 
 ```java
 @Override
@@ -318,7 +318,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
     // Apply the JSON Patch to the JSON document
     JsonValue patched = patch.apply(target);
     
-    // Convert the JSON document to a Java bean
+    // Convert the JSON document to a Java bean and return it
     return mapper.convertValue(patched, beanClass);
 }
 ```
@@ -334,7 +334,7 @@ public <T> T mergePatch(JsonMergePatch mergePatch, T targetBean, Class<T> beanCl
     // Apply the JSON Merge Patch to the JSON document
     JsonValue patched = mergePatch.apply(target);
     
-    // Convert the JSON document to a Java bean
+    // Convert the JSON document to a Java bean and return it
     return mapper.convertValue(patched, beanClass);
 }
 ```
@@ -355,7 +355,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     // Persist the changes
     service.updateContact(patched);
 
-    // Return 204 to indicate the operation has succeeded
+    // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
 }
 ```
@@ -376,7 +376,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     // Persist the changes
     service.updateContact(patched);
 
-    // Return 204 to indicate the operation has succeeded
+    // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
 }
 ```
@@ -432,6 +432,8 @@ To minimize the boilerplate code of converting the domain model to the API model
  
 By decoupling the API model from domain model, we can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our contact. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
 
+In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`.
+
 With MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
 
 ```java
@@ -444,11 +446,57 @@ public interface ContactMapper {
 
     void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
 }
+```  
+
+The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. MapStruct creates an actual implementation for the mapper interface and we can even check the code if we want to.
+
+A controller method for handling `PUT` request can be implemented as follows:
+
+```java
+@PutMapping(path = "/{id}", consumes = "application/json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody @Valid ContactResourceInput resourceInput) {
+
+    // Find the model that will be patched
+    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    
+    // Update the domain model with the details from the resource
+    mapper.update(resourceInput, contact);
+    
+    // Persist the changes
+    service.updateContact(contact);
+
+    // Return 204 to indicate the request has succeeded
+    return ResponseEntity.noContent().build();
+}
 ```
 
-The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans.
+And, finally, here's what the controller method for handling `PATCH` requests with JSON Patch could be like:
 
-[to be continued]
+```java
+@PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+public ResponseEntity<Void> updateContact(@PathVariable Long id,
+                                          @RequestBody JsonPatch patchDocument) {
+
+    // Find the model that will be patched
+    Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+    
+    // Map the model to an API resource model
+    ContactResourceInput resourceInput = mapper.asInput(contact);
+    
+    // Apply the patch to the API resource model
+    ContactResourceInput patched = patch(patchDocument, resourceInput, ContactResourceInput.class);
+
+     // Update the domain model with the details from the resource API model
+    mapper.update(patched, contact);
+    
+    // Persist the changes
+    service.updateContact(contact);
+
+    // Return 204 to indicate the request has succeeded
+    return ResponseEntity.noContent().build();
+}
+```
 
 ---
 
