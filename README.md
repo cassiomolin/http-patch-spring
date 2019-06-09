@@ -5,9 +5,9 @@ Here I intend to describe an approach to support HTTP `PATCH` with JSON Patch an
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
 - [Describing how the resource will be modified](#describing-how-the-resource-will-be-modified)
-- [JSON Patch](#json-patch)
+  - [JSON Patch](#json-patch)
   - [JSON Merge Patch](#json-merge-patch)
-  - [JSON-P: Java API for JSON Processing](#json-p-java-api-for-json-processing)
+- [JSON-P: Java API for JSON Processing](#json-p-java-api-for-json-processing)
 - [Parsing the request payload](#parsing-the-request-payload)
 - [Creating the controller endpoints](#creating-the-controller-endpoints)
 - [Applying the patch](#applying-the-patch)
@@ -422,7 +422,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 
 But we also should go further and, as a good practice, _decouple_ the domain model from the API model <sup>**</sup>.
 
-### Bonus: Decoupling the domain model from the API model
+## Bonus: Decoupling the domain model from the API model
 
 The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field in the application domain model. 
 
