@@ -439,7 +439,7 @@ public class Contact {
 }
 ```
 
-The method to apply the patch could be updated to handle the validation as well, as shown below:
+To perform the validation, we could inject `Validator` in our class and perform the validation by invoking the `validate()` method. If any constraint has been violated, it will return a set of `ConstraintViolation<T>` and then we can throw a `ConstraintViolationException`.  So method to apply the patch could be updated to handle the validation, as shown below:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -464,6 +464,23 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
+Alternatively, we could simply annotate the method with `@Valid` and Bean Validation will take care of the validation of the returned value (the Spring bean may need to be annotated with `@Validated` to trigger the validation):
+
+```java
+@Valid
+public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
+    
+    // Convert the Java bean to a JSON document
+    JsonStructure target = mapper.convertValue(targetBean, JsonStructure.class);
+    
+    // Apply the JSON Patch to the JSON document
+    JsonValue patched = applyPatch(patch, target);
+
+    // Convert the JSON document to a Java bean and return it
+    return mapper.convertValue(patched, beanClass);
+}
+```
+
 ## Bonus: Decoupling the domain model from the API model
 
 The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model.<sup>**</sup> 
@@ -480,29 +497,17 @@ In this example, the domain model class is called `Contact` and the model class 
 @Mapper(componentModel = "spring")
 public interface ContactMapper {
 
-    /**
-    * Map an instance of {@code Contact} to an instance of {@code ContactResourceInput}.
-    * 
-    * @param contact
-    * @return 
-    */
     ContactResourceInput asInput(Contact contact);
 
-    /**
-    * Update an instance of {@code Contact} with data from an instance of {@code ContactResourceInput}.
-    * 
-    * @param resourceInput
-    * @param contact 
-    */
     void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
+    
+    ...
 }
 ```  
 
 The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. Instead, it creates an actual implementation for the mapper interface and we can even check the code if we want to.
 
-Once the `ContactMapper` is injected in our controller, 
-
-And, finally, here's what the controller method for handling `PATCH` requests with JSON Patch could be like:
+Once the `ContactMapper` is injected in our controller, we can use it to handle the model conversion. Here's what the controller method for handling `PATCH` requests with JSON Patch could be like:
 
 ```java
 @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
@@ -529,7 +534,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 }
 ```
 
-For comparision purposes, here's a controller method for handling `PUT` request:
+And, for comparision purposes, here's a controller method for handling `PUT` request:
 
 ```java
 @PutMapping(path = "/{id}", consumes = "application/json")
