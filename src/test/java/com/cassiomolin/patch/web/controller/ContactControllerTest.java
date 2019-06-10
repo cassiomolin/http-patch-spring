@@ -1,9 +1,9 @@
-package com.cassiomolin.patch.we.controller;
+package com.cassiomolin.patch.web.controller;
 
 import com.cassiomolin.patch.config.JacksonConfig;
 import com.cassiomolin.patch.domain.Contact;
 import com.cassiomolin.patch.service.ContactService;
-import com.cassiomolin.patch.web.controller.ContactController;
+import com.cassiomolin.patch.web.PatchMediaType;
 import com.cassiomolin.patch.web.exception.WebApiExceptionHandler;
 import com.cassiomolin.patch.web.mapper.ContactMapper;
 import com.cassiomolin.patch.web.mapper.ContactMapperImpl;
@@ -23,6 +23,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.json.JsonMergePatch;
+import javax.json.JsonPatch;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
@@ -64,7 +66,7 @@ public class ContactControllerTest {
 
         mockMvc.perform(post("/contacts")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fromFile("json/contact/[POST]-valid-payload.json")))
+                .content(fromFile("json/contact/post-with-valid-payload.json")))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(redirectedUrlPattern("http://*/contacts/" + contactPersisted.getId()));
@@ -74,6 +76,8 @@ public class ContactControllerTest {
         ArgumentCaptor<Contact> contactArgumentCaptor = ArgumentCaptor.forClass(Contact.class);
         verify(service).createContact(contactArgumentCaptor.capture());
         verifyNoMoreInteractions(service);
+
+        verifyZeroInteractions(patchHelper);
 
         assertThat(contactArgumentCaptor.getValue()).isEqualToComparingFieldByFieldRecursively(contactToPersist());
     }
@@ -99,6 +103,8 @@ public class ContactControllerTest {
         verify(service).findContact(anyLong());
         verifyNoMoreInteractions(service);
 
+        verifyZeroInteractions(patchHelper);
+
         verify(mapper).asOutput(any(Contact.class));
     }
 
@@ -117,6 +123,8 @@ public class ContactControllerTest {
 
         verify(service).findContacts();
         verifyNoMoreInteractions(service);
+
+        verifyZeroInteractions(patchHelper);
 
         verify(mapper).asOutput(anyList());
     }
@@ -142,6 +150,8 @@ public class ContactControllerTest {
         verify(service).findContacts();
         verifyNoMoreInteractions(service);
 
+        verifyZeroInteractions(patchHelper);
+
         verify(mapper).asOutput(anyList());
     }
 
@@ -153,11 +163,65 @@ public class ContactControllerTest {
 
         mockMvc.perform(put("/contacts/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fromFile("json/contact/[PUT]-valid-payload.json")))
+                .content(fromFile("json/contact/put-with-valid-payload.json")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
         verify(mapper).update(any(Contact.class), any(ContactResourceInput.class));
+
+        ArgumentCaptor<Contact> contactArgumentCaptor = ArgumentCaptor.forClass(Contact.class);
+        verify(service).findContact(anyLong());
+        verify(service).updateContact(contactArgumentCaptor.capture());
+        verifyNoMoreInteractions(service);
+
+        verifyZeroInteractions(patchHelper);
+
+        assertThat(contactArgumentCaptor.getValue()).isEqualToComparingFieldByFieldRecursively(contactToUpdate());
+    }
+
+    @Test
+    @SneakyThrows
+    public void updateContactWithJsonPatch_shouldReturn204_whenInputIsValidAndContactExists() {
+
+        when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted()));
+
+        mockMvc.perform(patch("/contacts/{id}", 1L)
+                .contentType(PatchMediaType.APPLICATION_JSON_PATCH_VALUE)
+                .content(fromFile("json/contact/patch-with-valid-json-patch-payload.json")))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(mapper).asInput(any(Contact.class));
+        verify(mapper).update(any(Contact.class), any(ContactResourceInput.class));
+
+        verify(patchHelper).patch(any(JsonPatch.class), isA(ContactResourceInput.class), eq(ContactResourceInput.class));
+        verifyNoMoreInteractions(patchHelper);
+
+        ArgumentCaptor<Contact> contactArgumentCaptor = ArgumentCaptor.forClass(Contact.class);
+        verify(service).findContact(anyLong());
+        verify(service).updateContact(contactArgumentCaptor.capture());
+        verifyNoMoreInteractions(service);
+
+        assertThat(contactArgumentCaptor.getValue()).isEqualToComparingFieldByFieldRecursively(contactToUpdate());
+    }
+
+    @Test
+    @SneakyThrows
+    public void updateContactWithJsonMergePatch_shouldReturn204_whenInputIsValidAndContactExists() {
+
+        when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted()));
+
+        mockMvc.perform(patch("/contacts/{id}", 1L)
+                .contentType(PatchMediaType.APPLICATION_MERGE_PATCH_VALUE)
+                .content(fromFile("json/contact/patch-with-valid-json-merge-patch-payload.json")))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        verify(mapper).asInput(any(Contact.class));
+        verify(mapper).update(any(Contact.class), any(ContactResourceInput.class));
+
+        verify(patchHelper).mergePatch(any(JsonMergePatch.class), isA(ContactResourceInput.class), eq(ContactResourceInput.class));
+        verifyNoMoreInteractions(patchHelper);
 
         ArgumentCaptor<Contact> contactArgumentCaptor = ArgumentCaptor.forClass(Contact.class);
         verify(service).findContact(anyLong());
@@ -180,6 +244,8 @@ public class ContactControllerTest {
                 .andExpect(status().isNoContent());
 
         verifyZeroInteractions(mapper);
+
+        verifyZeroInteractions(patchHelper);
 
         verify(service).findContact(anyLong());
         verify(service).deleteContact(any(Contact.class));
@@ -212,19 +278,9 @@ public class ContactControllerTest {
 
         return Contact.builder()
                 .id(1L)
-                .name("John Appleseed")
+                .name("Johnny Appleseed")
                 .createdDateTime(OffsetDateTime.parse("2019-01-01T00:00:00Z"))
                 .lastModifiedDateTime(OffsetDateTime.parse("2019-01-01T00:00:00Z"))
-                .build();
-    }
-
-    private Contact contactUpdated() {
-
-        return Contact.builder()
-                .id(1L)
-                .name("John Appleseed")
-                .createdDateTime(OffsetDateTime.parse("2019-01-01T00:00:00Z"))
-                .lastModifiedDateTime(OffsetDateTime.parse("2019-01-01T22:22:22Z"))
                 .build();
     }
 }
