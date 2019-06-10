@@ -607,16 +607,16 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
   [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
   [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
-  [javax.json.Json]: TODO
-  [javax.json.JsonValue]: TODO
-  [javax.json.JsonValue.TRUE]: TODO
-  [javax.json.JsonValue.FALSE]: TODO
-  [javax.json.JsonValue.NULL]: TODO
-  [javax.json.JsonStructure]: TODO
-  [javax.json.JsonObject]: TODO
-  [javax.json.JsonArray]: TODO
-  [javax.json.JsonNumber]: TODO
-  [javax.json.JsonString]: TODO
+  [javax.json.Json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/Json.html
+  [javax.json.JsonValue]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonValue.html
+  [javax.json.JsonValue.TRUE]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonValue.html#TRUE
+  [javax.json.JsonValue.FALSE]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonValue.html#FALSE
+  [javax.json.JsonValue.NULL]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonValue.html#NULL
+  [javax.json.JsonStructure]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonStructure.html
+  [javax.json.JsonObject]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonObject.html
+  [javax.json.JsonArray]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonArray.html
+  [javax.json.JsonNumber]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonNumber.html
+  [javax.json.JsonString]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonString.html
 
   [javax.validation.constraints]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/constraints/package-summary.html
   [javax.validation.ConstraintViolation]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/ConstraintViolation.html
