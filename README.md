@@ -476,7 +476,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
         throw new ConstraintViolationException(violations);
     }
 
-    // Return the patched bean
+    // Return the bean that has been patched
     return beanPatched;
 }
 ```
@@ -581,6 +581,8 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 - [`javax.json`][javax.json]: Java API for JSON processing
 
 ---
+
+##### Footnotes
 
 <b id="f1">1.</b> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this. [↩](#a1)
 
