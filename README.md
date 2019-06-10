@@ -73,8 +73,8 @@ Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7
 
 So, as per definition, the `PUT` method is meant to be used for:
 
-- _Creating_ resources <sup>*</sup> and/or;
-- _Replacing_ the state of a given resource.
+- _Creating_ resources <sup>*</sup>
+- _Replacing_ the state of a given resource
 
 The key here is: the `PUT` payload must be a _new representation of the resource_. Hence it's not meant for performing _partial modifications_ to resources at all. To fill this gap, the `PATCH` method was created and it is currently defined in the [RFC 5789][rfc5789]:
 
@@ -132,10 +132,10 @@ JSON Merge Patch is a format that describes the changes to be made to a target J
 
 The server processing a JSON Merge Patch document determine the exact set of changes being requested by comparing the content of the provided patch against the current content of the target document: 
 
-- If the merge patch contains members that do not appear within the target document, those members are _added_. 
-- If the target does contain the member, the value is _replaced_.
-- _null_ values in the merge patch indicate that existing values in the target document are to be _removed_.
-- Other values in the target document will remain untouched.
+- If the merge patch contains members that do not appear within the target document, those members are _added_
+- If the target does contain the member, the value is _replaced_
+- _null_ values in the merge patch indicate that existing values in the target document are to be _removed_
+- Other values in the target document will remain _untouched_
 
 A request to update John's job title could be:
 
@@ -162,7 +162,7 @@ Let's have a quick look at the API to start getting familiar with it:
 | [`Json`][javax.json.Json] | Factory class for creating JSON processing objects |
 | [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
 | [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
-| [`JsonValue`][javax.json.JsonValue] | Represents an immutable JSON value. It can be an [_object_][javax.json.JsonObject], an [_array_][javax.json.JsonArray], a [_number_][javax.json.JsonNumber], a [_string_][javax.json.JsonString], [_`true`_][javax.json.JsonValue.TRUE], [_`false`_][javax.json.JsonValue.FALSE], or [_`null`_][javax.json.JsonValue.NULL] |
+| [`JsonValue`][javax.json.JsonValue] | Represents an immutable JSON value that can be an [_object_][javax.json.JsonObject], an [_array_][javax.json.JsonArray], a [_number_][javax.json.JsonNumber], a [_string_][javax.json.JsonString], [_`true`_][javax.json.JsonValue.TRUE], [_`false`_][javax.json.JsonValue.FALSE] or [_`null`_][javax.json.JsonValue.NULL] |
 | [`JsonStructure`][javax.json.JsonStructure] | Super type for the two structured types in JSON: [_object_][javax.json.JsonObject] and [_array_][javax.json.JsonArray] |
 
 To patch using JSON Patch, we would have the following: 
@@ -196,7 +196,7 @@ JsonMergePatch mergePatch = Json.createMergePatch(Json.createObjectBuilder()
 JsonValue patched = mergePatch.apply(target);
 ```
 
-Having said that, let me highlight that JSON-P is just an API. If we want to work with it, we need a concrete implementation such as [Apache Johnzon][johnzon]: 
+Having said that, let me highlight that JSON-P is just an API, that is, a set of interfaces. If we want to work with it, we need an _implementation_ such as [Apache Johnzon][johnzon]: 
 
 ```xml
 <dependency>
