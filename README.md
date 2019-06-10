@@ -1,10 +1,10 @@
-# Using HTTP `PATCH` in Spring MVC
+# Using HTTP `PATCH` in Spring
 
-This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring MVC with Spring Boot.
+This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring. I also have put together a [Postman collection][repo.postman] so you can play around with the API.
 
-As I've seen lots of misunderstanding on how `PATCH` works, I aim to clarify its usage before diving into the actual solution.
+As I have seen lots of misunderstanding on how `PATCH` works, I aim to clarify its usage before diving into the actual solution.
 
-<!-- For the blog: This post is heavy on code examples and the full source code is available on GitHub. -->
+<!-- For the blog: This post is heavy on code examples and the full source code is available on [GitHub][repo]. -->
 
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
@@ -137,7 +137,7 @@ The server processing a JSON Merge Patch document determine the exact set of cha
 - _null_ values in the merge patch indicate that existing values in the target document are to be _removed_
 - Other values in the target document will remain _untouched_
 
-A request to update John's job title could be:
+A request to modify John's job title could be:
 
 ```http
 PATCH /contacts/1 HTTP/1.1
@@ -508,7 +508,7 @@ While our service layer operates over the domain/persistence models, our API con
 
 To minimize the boilerplate code of converting the domain model to the API model (and vice versa), we could rely on frameworks such as [MapStruct][mapstruct]. And we also could consider using [Lombok][lombok] to generate getters, setters, `equals()`, `hashcode()` and `toString()` methods for us.
  
-By decoupling the API model from domain model, we also can ensure that we expose only the fields that can be updated. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
+By decoupling the API model from domain model, we also can ensure that we expose only the fields that can be modified. For example, we don't want to allow the client to modify the `id` field of our domain model. So our API model shouldn't contain the `id` field (and any attempt to modify it may cause an error or may be ignored).
 
 In this example, the domain model class is called `Contact` and the model class that represents a resource is called `ContactResourceInput`. To convert between these two models with MapStruct, we could define a mapper interface and MapStruct will generate an implementation for it:
 
@@ -643,3 +643,6 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [rfc6902.test]: https://tools.ietf.org/html/rfc6902#section-4.6
 
   [rfc7396]: https://tools.ietf.org/html/rfc7396
+  
+  [repo]: https://github.com/cassiomolin/patch-example
+  [repo.postman]: https://github.com/cassiomolin/patch-example/tree/master/misc/postman
