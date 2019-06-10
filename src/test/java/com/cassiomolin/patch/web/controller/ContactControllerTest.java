@@ -65,7 +65,7 @@ public class ContactControllerTest {
         when(service.createContact(any(Contact.class))).thenReturn(contactPersisted);
 
         mockMvc.perform(post("/contacts")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(fromFile("json/contact/post-with-valid-payload.json")))
                 .andDo(print())
                 .andExpect(status().isCreated())
@@ -90,10 +90,10 @@ public class ContactControllerTest {
         when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted));
 
         mockMvc.perform(get("/contacts/{id}", 1)
-                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.*", hasSize(4)))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("John Appleseed"))
@@ -115,10 +115,10 @@ public class ContactControllerTest {
         when(service.findContacts()).thenReturn(Lists.newArrayList());
 
         mockMvc.perform(get("/contacts")
-                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(0)));
 
         verify(service).findContacts();
@@ -136,10 +136,10 @@ public class ContactControllerTest {
         when(service.findContacts()).thenReturn(Lists.list(contactPersisted()));
 
         mockMvc.perform(get("/contacts")
-                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$.[0].*", hasSize(4)))
                 .andExpect(jsonPath("$.[0].id").value(1))
@@ -162,7 +162,7 @@ public class ContactControllerTest {
         when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted()));
 
         mockMvc.perform(put("/contacts/{id}", 1L)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(fromFile("json/contact/put-with-valid-payload.json")))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -181,7 +181,7 @@ public class ContactControllerTest {
 
     @Test
     @SneakyThrows
-    public void updateContactWithJsonPatch_shouldReturn204_whenInputIsValidAndContactExists() {
+    public void updateContactUsingJsonPatch_shouldReturn204_whenInputIsValidAndContactExists() {
 
         when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted()));
 
@@ -207,7 +207,7 @@ public class ContactControllerTest {
 
     @Test
     @SneakyThrows
-    public void updateContactWithJsonMergePatch_shouldReturn204_whenInputIsValidAndContactExists() {
+    public void updateContactUsingJsonMergePatch_shouldReturn204_whenInputIsValidAndContactExists() {
 
         when(service.findContact(anyLong())).thenReturn(Optional.of(contactPersisted()));
 
@@ -239,7 +239,7 @@ public class ContactControllerTest {
         when(service.findContact(anyLong())).thenReturn(Optional.of(contact));
 
         mockMvc.perform(delete("/contacts/{id}", 1)
-                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
