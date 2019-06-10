@@ -1,6 +1,8 @@
 # Using HTTP `PATCH` in Spring MVC
 
-This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial updates to resources in Spring MVC with Spring Boot.
+This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring MVC with Spring Boot.
+
+<!-- For the blog: This post is heavy on code examples and the full source code is available on GitHub. -->
 
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
@@ -439,7 +441,7 @@ public class Contact {
 }
 ```
 
-To perform the validation, we could inject `Validator` in our class and perform the validation by invoking the `validate()` method. If any constraint has been violated, it will return a set of `ConstraintViolation<T>` and then we can throw a `ConstraintViolationException`.  So method to apply the patch could be updated to handle the validation, as shown below:
+To perform the validation, we could inject `Validator` in our class and invoke the `validate()` method. If any constraint has been violated, it will return a set of `ConstraintViolation<T>` and then we can throw a `ConstraintViolationException`. So the method to apply the patch could be updated to handle the validation, as shown below:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -464,7 +466,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-Alternatively, we could simply annotate the method with `@Valid` and Bean Validation will take care of the validation of the returned value (the Spring bean may need to be annotated with `@Validated` to trigger the validation):
+Alternatively, we could simply annotate the method with `@Valid` and Bean Validation will take care of performing the the validation on the returned value (the Spring bean may need to be annotated with `@Validated` to trigger the validation):
 
 ```java
 @Valid
@@ -534,7 +536,7 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 }
 ```
 
-And, for comparision purposes, here's a controller method for handling `PUT` request:
+And, for comparision purposes, here's a controller method for handling `PUT` requests:
 
 ```java
 @PutMapping(path = "/{id}", consumes = "application/json")
