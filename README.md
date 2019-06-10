@@ -2,6 +2,8 @@
 
 This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring MVC with Spring Boot.
 
+As I've seen lots of misunderstanding on how `PATCH` works, I aim to clarify its usage before diving into the actual solution.
+
 <!-- For the blog: This post is heavy on code examples and the full source code is available on GitHub. -->
 
 ##### Table of Contents  
@@ -15,6 +17,7 @@ This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ 
 - [Applying the patch](#applying-the-patch)
 - [Validating the patch](#validating-the-patch)
 - [Bonus: Decoupling the domain model from the API model](#bonus-decoupling-the-domain-model-from-the-api-model)
+- [References](#references)
 
 ## The problem with `PUT` and the need for `PATCH`
 
@@ -37,7 +40,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Now consider we want to update this resource, as John has been promoted to senior engineer and we want to keep our contact list updated. We could perform this update with a `PUT` request:
+Let's sayd that John has been promoted to senior engineer and we want to keep our contact list updated. We could modify this resource using a `PUT` request, as shown below:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -60,29 +63,29 @@ Content-Type: application/json
 }
 ```
 
-With `PUT`, however, we have to send the full representation of the resource even when we need to update a _single_ field of a resource, which may not be desirable in some situations.
+With `PUT`, however, we have to send the full representation of the resource even when we need to modify a _single_ field of a resource, which may not be desirable in some situations.
 
 Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7231], one of the documents that currently define the HTTP/1.1 protocol:
 
->[**4.3.4.  PUT**][put]
+>[**4.3.4.  PUT**][rfc7231.put]
 >
 >The `PUT` method requests that the state of the target resource be created or replaced with the state defined by the representation enclosed in the request message payload. [...]
 
 So, as per definition, the `PUT` method is meant to be used for:
 
-- Creating resources <sup>*</sup> and/or;
-- Replacing the state of a given resource.
- 
-It's not meant for performing _partial modifications_ to resource at all. To fill this gap, the `PATCH` method was created and it is currently defined in the [RFC 5789][rfc5789]:
+- _Creating_ resources <sup>*</sup> and/or;
+- _Replacing_ the state of a given resource.
 
-> [**2. The PATCH Method**][patch]
+The key here is: the `PUT` payload must be a _new representation of the resource_. Hence it's not meant for performing _partial modifications_ to resources at all. To fill this gap, the `PATCH` method was created and it is currently defined in the [RFC 5789][rfc5789]:
+
+> [**2. The PATCH Method**][rfc5789.patch]
 >
 >The `PATCH` method requests that a set of changes described in the request entity be applied to the resource identified by the Request-URI. The set of changes is represented in a format called a "patch document" identified by a media type. [...]
 
 The difference between the `PUT` and `PATCH` requests is reflected in the way the server processes the request payload to modify a given resource:
 
 - In a `PUT` request, the payload is a modified version of the resource stored on the server. And the client is requesting the stored version to be _replaced_ with the new version.
-- In a `PATCH` request, the request payload contains a set of instructions describing how a resource currently stored on the server should be modified to produce a new version.
+- In a `PATCH` request, the request payload contains a _set of instructions_ describing how a resource currently stored on the server should be modified to produce a new version.
 
 ## Describing how the resource will be modified
 
@@ -92,17 +95,26 @@ Let's have a look at some formats for describing how a resource is to be `PATCH`
 
 ### JSON Patch
 
-JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type:
+JSON Patch is a format for expressing a sequence of operations to be applied to a JSON document. It is defined in the [RFC 6902][rfc6902] and is identified by the `application/json-patch+json` media type.
 
-> JSON Patch is a format (identified by the media type `application/json-patch+json`) for expressing a sequence of operations to apply to a target JSON document; it is suitable for use with the HTTP `PATCH` method.
+The JSON Patch document represents an array of objects and each object represents a single operation to be applied to the target JSON document. 
 
-> A JSON Patch document is a JSON document that represents an array of objects.  Each object represents a single operation to be applied to the target JSON document.
+The evaluation of a JSON Patch document begins against a target JSON document and the operations are applied sequentially in the order they appear in the array. Each operation in the sequence is applied to the target document and the resulting document becomes the target of the next operation. The evaluation continues until all operations are successfully applied or until an error condition is encountered.
 
-> Evaluation of a JSON Patch document begins against a target JSON document.  Operations are applied sequentially in the order they appear in the array.  Each operation in the sequence is applied to the target document; the resulting document becomes the target of the next operation.  Evaluation continues until all operations are successfully applied or until an error condition is encountered.
+The operation objects must have exactly one `op` member, whose value indicates the operation to perform:
 
-> Operation objects MUST have exactly one `op` member, whose value indicates the operation to perform.  Its value MUST be one of `add`, `remove`, `replace`, `move`, `copy`, or `test`; other values are errors.
+| Operation | Description |
+| --------- | ----------- |
+| [`add`][rfc6902.add] | Adds the value at the target location; if the value exists in the given location, it's replaced |
+| [`remove`][rfc6902.remove] | Removes the value at the target location |
+| [`replace`][rfc6902.replace] | Replaces the value at the target location |
+| [`move`][rfc6902.move] | Removes the value at a specified location and adds it to the target location |
+| [`copy`][rfc6902.copy] | Copies the value at a specified location to the target location |
+| [`test`][rfc6902.test] | Tests that a value at the target location is equal to a specified value |
 
-A request to update John's job title could be:
+Any other values are considered errors.
+
+A request to modify John's job title could be:
 
 ```http
 PATCH /contacts/1 HTTP/1.1
@@ -116,9 +128,14 @@ Content-Type: application/json-patch+json
 
 ### JSON Merge Patch
 
-JSON Merge Patch defines a format and processing rules for applying operations to a JSON document that are based upon specific content of the target document. It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type:
+JSON Merge Patch is a format that describes the changes to be made to a target JSON document using a syntax that closely mimics the document being modified. It is defined in the [RFC 7396][rfc7396] is identified by the `application/merge-patch+json` media type.
 
-> A JSON merge patch document describes changes to be made to a target JSON document using a syntax that closely mimics the document being modified.  Recipients of a merge patch document determine the exact set of changes being requested by comparing the content of the provided patch against the current content of the target document. If the provided merge patch contains members that do not appear within the target, those members are added.  If the target does contain the member, the value is replaced.  Null values in the merge patch are given special meaning to indicate the removal of existing values in the target.
+The server processing a JSON Merge Patch document determine the exact set of changes being requested by comparing the content of the provided patch against the current content of the target document: 
+
+- If the merge patch contains members that do not appear within the target document, those members are _added_. 
+- If the target does contain the member, the value is _replaced_.
+- _null_ values in the merge patch indicate that existing values in the target document are to be _removed_.
+- Other values in the target document will remain untouched.
 
 A request to update John's job title could be:
 
@@ -136,17 +153,17 @@ Content-Type: application/merge-patch+json
 
 ## JSON-P: Java API for JSON Processing
 
-JSON-P 1.0, defined in the JSR 353 and also known as _Java API for JSON Processing_ 1.0, brought official support for JSON processing in Java EE. JSON-P 1.1, defined in the JSR 374, introduced support for JSON Patch and JSON Merge Patch formats to Java EE.
+_JSON-P_ 1.0, defined in the JSR 353 and also known as _Java API for JSON Processing_ 1.0, brought official support for JSON processing in Java EE. JSON-P 1.1, defined in the JSR 374, introduced support for JSON Patch and JSON Merge Patch formats to Java EE.
 
 Let's have a quick look at the API to start getting familiar with it: 
 
 | Type | Description |
 | ---- | ----------- |
-| `Json` | Factory class for creating JSON processing objects |
+| [`Json`][javax.json.Json] | Factory class for creating JSON processing objects |
 | [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
 | [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
-| `JsonValue` | Represents an immutable JSON value. It can be an _object_ (`JsonObject`), an _array_ (`JsonArray`), a _number_ (`JsonNumber`), a _string_ (`JsonString`), _`true`_ (`JsonValue.TRUE`), _`false`_ (`JsonValue.FALSE`), or _`null`_ (`JsonValue.NULL`) |
-| `JsonStructure` | Super type for the two structured types in JSON: object (`JsonObject`) and array (`JsonArray`) |
+| [`JsonValue`][javax.json.JsonValue] | Represents an immutable JSON value. It can be an _object_ ([`JsonObject`][javax.json.JsonObject]), an _array_ ([`JsonArray`][javax.json.JsonArray]), a _number_ ([`JsonNumber`][javax.json.JsonNumber]), a _string_ ([`JsonString`][javax.json.JsonString]), _`true`_ ([`JsonValue.TRUE`][javax.json.JsonValue.TRUE]), _`false`_ ([`JsonValue.FALSE`][javax.json.JsonValue.FALSE]), or _`null`_ ([`JsonValue.NULL`][javax.json.JsonValue.NULL]) |
+| [`JsonStructure`][javax.json.JsonStructure] | Super type for the two structured types in JSON: _object_ ([`JsonObject`][javax.json.JsonObject]) and _array_ ([`JsonArray`][javax.json.JsonArray]) |
 
 To patch using JSON Patch, we would have the following: 
 
@@ -317,14 +334,14 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 It is worth it to mention that both JSON Patch and JSON Merge Patch operate over JSON documents. 
 
-So, to apply the patch to a Java bean, we first need to convert the Java bean to a JSON-P type, such as `JsonStructure` or `JsonValue`. Then we apply the patch to it and convert the patched document back to a Java bean:
+So, to apply the patch to a Java bean, we first need to convert the Java bean to a JSON-P type, such as [`JsonStructure`][javax.json.JsonStructure] or [`JsonValue`][javax.json.JsonValue]. Then we apply the patch to it and convert the patched document back to a Java bean:
 
 <!-- Hack to center the image in GitHub -->
 <p align="center">
   <img src="misc/patch-conversions.png" alt="Patch conversions" width="100%"/>
 </p>
 
-These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types. With this extension module, we can read JSON as `JsonValue`s and write `JsonValue`s as JSON as part of normal Jackson processing, taking advantage of the powerful data-binding features that Jackson provides:
+These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types. With this extension module, we can read JSON as [`JsonValue`][javax.json.JsonValue]s and write [`JsonValue`][javax.json.JsonValue]s as JSON as part of normal Jackson processing, taking advantage of the powerful data-binding features that Jackson provides:
 
 ```xml
 <dependency>
@@ -334,7 +351,7 @@ These conversions could be handled by Jackson, which provides an [extension modu
 </dependency>
 ```
 
-With module extension dependency on the classpath, we can configure the `ObjectMapper` and expose it as a Spring `@Bean` (so it can be picked up by String and can be injected in other Spring beans):  
+With module extension dependency on the classpath, we can configure the [`ObjectMapper`][com.fasterxml.jackson.databind.ObjectMapper] and expose it as a Spring [`@Bean`][org.springframework.context.annotation.Bean] (so it can be picked up by String and can be injected in other Spring beans):  
 
 ```java
 @Bean
@@ -347,13 +364,13 @@ public ObjectMapper objectMapper() {
 }
 ```
 
-The `findAndRegisterModules()` method is important here: it tells Jackson to search and register the any modules found in the classpath, including the [`jackson-datatype-jsr353`][jackson-datatype-jsr353] extension module. Alternatively, we can register the module manually: 
+The [`findAndRegisterModules()`][com.fasterxml.jackson.databind.ObjectMapper.findAndRegisterModules] method is important here: it tells Jackson to search and register the any modules found in the classpath, including the [`jackson-datatype-jsr353`][jackson-datatype-jsr353] extension module. Alternatively, we can register the module manually: 
 
 ```java
 mapper.registerModule(new JSR353Module());
 ```
 
-Once the `ObjectMapper` is configured, we can inject it in our Spring beans and create a method to apply the JSON Patch to a Java bean:
+Once the [`ObjectMapper`][com.fasterxml.jackson.databind.ObjectMapper] is configured, we can inject it in our Spring beans and create a method to apply the JSON Patch to a Java bean:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -441,7 +458,7 @@ public class Contact {
 }
 ```
 
-To perform the validation, we could inject `Validator` in our class and invoke the `validate()` method. If any constraint has been violated, it will return a set of `ConstraintViolation<T>` and then we can throw a `ConstraintViolationException`. So the method to apply the patch could be updated to handle the validation, as shown below:
+To perform the validation, we could inject [`Validator`][javax.validation.Validator] in our class and invoke the [`validate()`][javax.validation.Validator.validate] method. If any constraint has been violated, it will return a set of [`ConstraintViolation<T>`][javax.validation.ConstraintViolation] and then we can throw a [`ConstraintViolationException`][javax.validation.ConstraintViolationException]. So the method to apply the patch could be updated to handle the validation, as shown below:
 
 ```java
 public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
@@ -466,7 +483,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 }
 ```
 
-Alternatively, we could simply annotate the method with `@Valid` and Bean Validation will take care of performing the the validation on the returned value (the Spring bean may need to be annotated with `@Validated` to trigger the validation):
+Alternatively, we could simply annotate the method with [`@Valid`][javax.validation.Valid] and Bean Validation will take care of performing the the validation on the returned value (the Spring bean may need to be annotated with [`@Validated`][org.springframework.validation.annotation.Validated] to trigger the validation):
 
 ```java
 @Valid
@@ -507,7 +524,7 @@ public interface ContactMapper {
 }
 ```  
 
-The `ContactMapper` implementation will be exposed as a Spring `@Component`, so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. Instead, it creates an actual implementation for the mapper interface and we can even check the code if we want to.
+The `ContactMapper` implementation will be exposed as a Spring [`@Component`][org.springframework.stereotype.Component], so it can be injected in other Spring beans. Let me highlight that _MapStruct doesn't use reflections_. Instead, it creates an actual implementation for the mapper interface and we can even check the code if we want to.
 
 Once the `ContactMapper` is injected in our controller, we can use it to handle the model conversion. Here's what the controller method for handling `PATCH` requests with JSON Patch could be like:
 
@@ -557,30 +574,72 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 }
 ```
 
+## References
+
+- [RFC 7231][rfc7231]: Semantics and content for the HTTP/1.1 protocol
+- [RFC 5789][rfc5789]: HTTP `PATCH` method
+- [RFC 6902][rfc6902]: JSON Patch
+- [RFC 7396][rfc7396]: JSON Merge Patch
+- [`javax.json`][javax.json]: Java API for JSON processing
+
 ---
 
 <sup>*</sup> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this.
 
 <sup>**</sup> I also have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow.
 
-
-  [put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
-  [patch]: https://tools.ietf.org/html/rfc5789#section-2
-  [rfc7231]: https://tools.ietf.org/html/rfc7231
-  [rfc5789]: https://tools.ietf.org/html/rfc5789
-  [rfc6902]: https://tools.ietf.org/html/rfc6902
-  [rfc7396]: https://tools.ietf.org/html/rfc7396
+  
   [so.56241060]: https://stackoverflow.com/a/56241060/1426227
   [so.36175349]: https://stackoverflow.com/a/36175349/1426227
-  [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
-  [johnzon]: https://johnzon.apache.org/
-  [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
-  [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
-  [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
-  [org.springframework.web.bind.annotation.RequestBody]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestBody.html
-  [jackson-datatype-jsr353]: https://github.com/FasterXML/jackson-datatype-jsr353
+  
   [org.springframework.http.converter.AbstractHttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/AbstractHttpMessageConverter.html
   [org.springframework.stereotype.Component]: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/stereotype/Component.html
+  [org.springframework.http.converter.HttpMessageConverter]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/converter/HttpMessageConverter.html
+  [org.springframework.web.bind.annotation.RequestBody]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestBody.html
+  [org.springframework.validation.annotation.Validated]: https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/validation/annotation/Validated.html
+  [org.springframework.context.annotation.Bean]: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/annotation/Bean.html
+
+  [lombok]: https://projectlombok.org/  
   [mapstruct]: http://mapstruct.org/
-  [lombok]: https://projectlombok.org/
+  [johnzon]: https://johnzon.apache.org/
+  [jackson-datatype-jsr353]: https://github.com/FasterXML/jackson-datatype-jsr353
+  
+  [javax.json]: https://javaee.github.io/javaee-spec/javadocs/javax/json/package-summary.html
+  [javax.json.JsonPatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonPatch.html
+  [javax.json.JsonMergePatch]: https://javaee.github.io/javaee-spec/javadocs/javax/json/JsonMergePatch.html
+  [javax.json.Json]: TODO
+  [javax.json.JsonValue]: TODO
+  [javax.json.JsonValue.TRUE]: TODO
+  [javax.json.JsonValue.FALSE]: TODO
+  [javax.json.JsonValue.NULL]: TODO
+  [javax.json.JsonStructure]: TODO
+  [javax.json.JsonObject]: TODO
+  [javax.json.JsonArray]: TODO
+  [javax.json.JsonNumber]: TODO
+  [javax.json.JsonString]: TODO
+
   [javax.validation.constraints]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/constraints/package-summary.html
+  [javax.validation.ConstraintViolation]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/ConstraintViolation.html
+  [javax.validation.ConstraintViolationException]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/ConstraintViolationException.html
+  [javax.validation.Validator]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/Validator.html
+  [javax.validation.Validator.validate]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/Validator.html#validate-T-java.lang.Class...-
+  [javax.validation.Valid]: https://javaee.github.io/javaee-spec/javadocs/javax/validation/Valid.html
+
+  [com.fasterxml.jackson.databind.ObjectMapper]: https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html
+  [com.fasterxml.jackson.databind.ObjectMapper.findAndRegisterModules]: https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--
+
+  [rfc7231]: https://tools.ietf.org/html/rfc7231
+  [rfc7231.put]: https://tools.ietf.org/html/rfc7231#section-4.3.4
+
+  [rfc5789]: https://tools.ietf.org/html/rfc5789
+  [rfc5789.patch]: https://tools.ietf.org/html/rfc5789#section-2
+
+  [rfc6902]: https://tools.ietf.org/html/rfc6902
+  [rfc6902.add]: https://tools.ietf.org/html/rfc6902#section-4.1
+  [rfc6902.remove]: https://tools.ietf.org/html/rfc6902#section-4.2
+  [rfc6902.replace]: https://tools.ietf.org/html/rfc6902#section-4.3
+  [rfc6902.move]:https://tools.ietf.org/html/rfc6902#section-4.4
+  [rfc6902.copy]: https://tools.ietf.org/html/rfc6902#section-4.5
+  [rfc6902.test]: https://tools.ietf.org/html/rfc6902#section-4.6
+
+  [rfc7396]: https://tools.ietf.org/html/rfc7396
