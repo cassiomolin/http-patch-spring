@@ -338,7 +338,7 @@ So, to apply the patch to a Java bean, we first need to convert the Java bean to
 
 <!-- Hack to center the image in GitHub -->
 <p align="center">
-  <img src="misc/patch-conversions.png" alt="Patch conversions" width="100%"/>
+  <img src="misc/images/patch-conversions.png" alt="Patch conversions" width="100%"/>
 </p>
 
 These conversions could be handled by Jackson, which provides an [extension module][jackson-datatype-jsr353] to work with JSON-P types. With this extension module, we can read JSON as [`JsonValue`][javax.json.JsonValue]s and write [`JsonValue`][javax.json.JsonValue]s as JSON as part of normal Jackson processing, taking advantage of the powerful data-binding features that Jackson provides:
