@@ -1,54 +1,52 @@
 package com.cassiomolin.patch.service.impl;
 
 import com.cassiomolin.patch.domain.Contact;
-import com.cassiomolin.patch.domain.Phone;
-import com.cassiomolin.patch.domain.Work;
 import com.cassiomolin.patch.service.ContactService;
-import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class DefaultContactService implements ContactService {
 
-    private List<Contact> contacts;
+    private static final List<Contact> CONTACTS = new ArrayList<>();
 
-    @PostConstruct
-    public void init() {
+    private static final AtomicLong ID_GENERATOR = new AtomicLong();
 
-        contacts = new ArrayList<>();
-
-        contacts.add(Contact.builder()
-                .id(1L)
-                .name("John Appleseed")
-                .birthday(LocalDate.parse("1990-01-01"))
-                .work(Work.builder().company("Acme").title("Engineer").build())
-                .phones(Lists.newArrayList(Phone.builder().phone("0000000000").build()))
-                .notes("Cool guy!")
-                .favorite(false)
-                //.createdDateTime(OffsetDateTime.parse("2019-01-01T10:00:00Z"))
-                .build());
+    @Override
+    public Contact createContact(Contact contact) {
+        contact.setId(ID_GENERATOR.incrementAndGet());
+        contact.setCreatedDateTime(OffsetDateTime.now(ZoneOffset.UTC));
+        contact.setLastModifiedDateTime(OffsetDateTime.now(ZoneOffset.UTC));
+        CONTACTS.add(contact);
+        return contact;
     }
 
     @Override
     public List<Contact> findContacts() {
-        return contacts;
+        return CONTACTS;
     }
 
     @Override
     public Optional<Contact> findContact(Long id) {
-        return contacts.stream()
+        return CONTACTS.stream()
                 .filter(contact -> id.equals(contact.getId()))
                 .findFirst();
     }
 
     @Override
     public void updateContact(Contact contact) {
-        contacts.set(contacts.indexOf(contact), contact);
+        contact.setLastModifiedDateTime(OffsetDateTime.now(ZoneOffset.UTC));
+        CONTACTS.set(CONTACTS.indexOf(contact), contact);
+    }
+
+    @Override
+    public void deleteContact(Contact contact) {
+        CONTACTS.remove(contact);
     }
 }

@@ -12,10 +12,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.json.JsonMergePatch;
 import javax.json.JsonPatch;
 import javax.validation.Valid;
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -29,87 +31,82 @@ public class ContactController {
 
     private final PatchHelper patchHelper;
 
-    /**
-     * Retrieve a representation of all contacts.
-     *
-     * @return HTTP response with the 200 status code with the operation completed successfully
-     */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateContact(@Valid @RequestBody ContactResourceInput contactResource) {
+
+        Contact contact = mapper.asContact(contactResource);
+        Contact contactCreated = service.createContact(contact);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(contactCreated.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).build();
+    }
+
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ContactResourceOutput>> findContacts() {
 
         List<Contact> contacts = service.findContacts();
-        return ResponseEntity.ok(mapper.asOutput(contacts));
+        List<ContactResourceOutput> contactResources = mapper.asOutput(contacts);
+
+        return ResponseEntity.ok(contactResources);
     }
 
-    /**
-     * Retrieve a representation of the contact with the given id.
-     *
-     * @param id contact identifier
-     * @return HTTP response with the 200 status code if the operation completed successfully
-     */
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ContactResourceOutput> findContact(@PathVariable Long id) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-        return ResponseEntity.ok(mapper.asOutput(contact));
+        ContactResourceOutput contactResource = mapper.asOutput(contact);
+
+        return ResponseEntity.ok(contactResource);
     }
 
-    /**
-     * Update the contact with the given id.
-     *
-     * @param id            contact identifier
-     * @param resourceInput resource input representation
-     * @return HTTP response with the 204 status code if the operation completed successfully
-     */
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> updateContact(@PathVariable Long id,
-                                              @RequestBody @Valid ContactResourceInput resourceInput) {
+                                              @RequestBody @Valid ContactResourceInput contactResource) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-        mapper.update(resourceInput, contact);
+        mapper.update(contactResource, contact);
         service.updateContact(contact);
 
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Update the contact with the given id using JSON Patch (RFC 6902).
-     *
-     * @param id            contact identifier
-     * @param patchDocument JSON Patch document
-     * @return HTTP response with the 204 status code if the operation completed successfully
-     */
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_JSON_PATCH_VALUE)
     public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                               @RequestBody JsonPatch patchDocument) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-        ContactResourceInput resourceInput = mapper.asInput(contact);
-        ContactResourceInput patched = patchHelper.patch(patchDocument, resourceInput, ContactResourceInput.class);
+        ContactResourceInput contactResource = mapper.asInput(contact);
+        ContactResourceInput contactResourcePatched = patchHelper.patch(patchDocument, contactResource, ContactResourceInput.class);
 
-        mapper.update(patched, contact);
+        mapper.update(contactResourcePatched, contact);
         service.updateContact(contact);
 
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Update the contact with the given id using JSON Merge Patch (RFC 7396).
-     *
-     * @param id                 contact identifier
-     * @param mergePatchDocument JSON Merge Patch document
-     * @return HTTP response with the 204 status code if the operation completed successfully
-     */
     @PatchMapping(path = "/{id}", consumes = PatchMediaType.APPLICATION_MERGE_PATCH_VALUE)
     public ResponseEntity<Void> updateContact(@PathVariable Long id,
                                               @RequestBody JsonMergePatch mergePatchDocument) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-        ContactResourceInput resourceInput = mapper.asInput(contact);
-        ContactResourceInput patched = patchHelper.mergePatch(mergePatchDocument, resourceInput, ContactResourceInput.class);
+        ContactResourceInput contactResource = mapper.asInput(contact);
+        ContactResourceInput contactResourcePatched = patchHelper.mergePatch(mergePatchDocument, contactResource, ContactResourceInput.class);
 
-        mapper.update(patched, contact);
+        mapper.update(contactResourcePatched, contact);
         service.updateContact(contact);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping(path = "/{id}")
+    public ResponseEntity<Void> deleteContact(@PathVariable Long id) {
+
+        Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
+        service.deleteContact(contact);
 
         return ResponseEntity.noContent().build();
     }
