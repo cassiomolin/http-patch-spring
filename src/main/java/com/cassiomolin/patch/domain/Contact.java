@@ -30,7 +30,7 @@ public class Contact {
 
     private List<String> groups;
 
-    private boolean favorite;
+    private Boolean favorite;
 
     private String notes;
 

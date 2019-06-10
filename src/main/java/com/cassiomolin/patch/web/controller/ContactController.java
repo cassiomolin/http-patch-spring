@@ -68,7 +68,7 @@ public class ContactController {
                                               @RequestBody @Valid ContactResourceInput contactResource) {
 
         Contact contact = service.findContact(id).orElseThrow(ResourceNotFoundException::new);
-        mapper.update(contactResource, contact);
+        mapper.update(contact, contactResource);
         service.updateContact(contact);
 
         return ResponseEntity.noContent().build();
@@ -82,7 +82,7 @@ public class ContactController {
         ContactResourceInput contactResource = mapper.asInput(contact);
         ContactResourceInput contactResourcePatched = patchHelper.patch(patchDocument, contactResource, ContactResourceInput.class);
 
-        mapper.update(contactResourcePatched, contact);
+        mapper.update(contact, contactResourcePatched);
         service.updateContact(contact);
 
         return ResponseEntity.noContent().build();
@@ -96,7 +96,7 @@ public class ContactController {
         ContactResourceInput contactResource = mapper.asInput(contact);
         ContactResourceInput contactResourcePatched = patchHelper.mergePatch(mergePatchDocument, contactResource, ContactResourceInput.class);
 
-        mapper.update(contactResourcePatched, contact);
+        mapper.update(contact, contactResourcePatched);
         service.updateContact(contact);
 
         return ResponseEntity.noContent().build();

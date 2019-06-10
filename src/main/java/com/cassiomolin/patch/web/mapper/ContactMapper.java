@@ -15,7 +15,7 @@ public interface ContactMapper {
 
     ContactResourceInput asInput(Contact contact);
 
-    void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
+    void update(@MappingTarget Contact contact, ContactResourceInput resourceInput);
 
     ContactResourceOutput asOutput(Contact contact);
 

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
@@ -28,7 +29,11 @@ public class ContactResourceOutput {
 
     private List<String> groups;
 
-    private boolean favorite;
+    private Boolean favorite;
 
     private String notes;
+
+    private OffsetDateTime createdDateTime;
+
+    private OffsetDateTime lastModifiedDateTime;
 }

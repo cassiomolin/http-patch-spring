@@ -51,7 +51,7 @@ public class PatchTest {
     public void updateContact_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateContact(id, fromFile("json/put.json"));
+        ResponseEntity<String> patchResponse = updateContact(id, fromFile("json/contact/put.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
@@ -79,7 +79,7 @@ public class PatchTest {
     public void updateContactUsingJsonPatch_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateContactUsingJsonPatch(id, fromFile("json/json-patch.json"));
+        ResponseEntity<String> patchResponse = updateContactUsingJsonPatch(id, fromFile("json/contact/json-patch.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
@@ -107,7 +107,7 @@ public class PatchTest {
     public void updateContactUsingJsonMergePatch_shouldSucceed() {
 
         Long id = 1L;
-        ResponseEntity<String> patchResponse = updateContactUsingJsonMergePatch(id, fromFile("json/merge-patch.json"));
+        ResponseEntity<String> patchResponse = updateContactUsingJsonMergePatch(id, fromFile("json/contact/merge-patch.json"));
 
         assertThat(patchResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(patchResponse.getBody()).isNull();
