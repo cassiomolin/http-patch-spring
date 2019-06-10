@@ -1,6 +1,11 @@
 package com.cassiomolin.patch;
 
+import com.cassiomolin.patch.domain.Contact;
+import com.cassiomolin.patch.domain.Phone;
+import com.cassiomolin.patch.domain.Work;
+import com.cassiomolin.patch.service.ContactService;
 import com.cassiomolin.patch.web.PatchMediaType;
+import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +21,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StreamUtils;
 
 import java.nio.charset.Charset;
+import java.time.LocalDate;
 
 import static com.jayway.jsonassert.JsonAssert.with;
 import static com.jayway.jsonassert.impl.matcher.IsCollectionWithSize.hasSize;
@@ -29,11 +35,15 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 public class PatchTest {
 
     @Autowired
+    private ContactService contactService;
+
+    @Autowired
     private TestRestTemplate restTemplate;
 
     @Before
     public void setup() {
         restTemplate.getRestTemplate().setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        setupTestData();
     }
 
     @Test
@@ -147,5 +157,22 @@ public class PatchTest {
     @SneakyThrows
     private String fromFile(String path) {
         return StreamUtils.copyToString(new ClassPathResource(path).getInputStream(), Charset.defaultCharset());
+    }
+
+    private void setupTestData() {
+
+        contactService.createContact(Contact.builder()
+                .name("John Appleseed")
+                .birthday(LocalDate.parse("1990-01-01"))
+                .work(Work.builder().company("Acme").title("Engineer").build())
+                .phones(Lists.newArrayList(Phone.builder().phone("0000000000").build()))
+                .notes("Cool guy!")
+                .build());
+
+        contactService.createContact(Contact.builder()
+                .name("James Doe")
+                .phones(Lists.newArrayList(Phone.builder().phone("3333333333").type("mobile").build()))
+                .favorite(true)
+                .build());
     }
 }
