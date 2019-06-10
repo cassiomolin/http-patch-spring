@@ -162,8 +162,8 @@ Let's have a quick look at the API to start getting familiar with it:
 | [`Json`][javax.json.Json] | Factory class for creating JSON processing objects |
 | [`JsonPatch`][javax.json.JsonPatch] | Represents an implementation of JSON Patch |
 | [`JsonMergePatch`][javax.json.JsonMergePatch] | Represents an implementation of JSON Merge Patch |
-| [`JsonValue`][javax.json.JsonValue] | Represents an immutable JSON value. It can be an _object_ ([`JsonObject`][javax.json.JsonObject]), an _array_ ([`JsonArray`][javax.json.JsonArray]), a _number_ ([`JsonNumber`][javax.json.JsonNumber]), a _string_ ([`JsonString`][javax.json.JsonString]), _`true`_ ([`JsonValue.TRUE`][javax.json.JsonValue.TRUE]), _`false`_ ([`JsonValue.FALSE`][javax.json.JsonValue.FALSE]), or _`null`_ ([`JsonValue.NULL`][javax.json.JsonValue.NULL]) |
-| [`JsonStructure`][javax.json.JsonStructure] | Super type for the two structured types in JSON: _object_ ([`JsonObject`][javax.json.JsonObject]) and _array_ ([`JsonArray`][javax.json.JsonArray]) |
+| [`JsonValue`][javax.json.JsonValue] | Represents an immutable JSON value. It can be an [_object_][javax.json.JsonObject], an [_array_][javax.json.JsonArray], a [_number_][javax.json.JsonNumber], a [_string_][javax.json.JsonString], [_`true`_][javax.json.JsonValue.TRUE], [_`false`_][javax.json.JsonValue.FALSE], or [_`null`_][javax.json.JsonValue.NULL] |
+| [`JsonStructure`][javax.json.JsonStructure] | Super type for the two structured types in JSON: [_object_][javax.json.JsonObject] and [_array_][javax.json.JsonArray] |
 
 To patch using JSON Patch, we would have the following: 
 
