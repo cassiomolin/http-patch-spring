@@ -4,8 +4,6 @@ This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ 
 
 As I have seen lots of misunderstanding on how `PATCH` works, I aim to clarify its usage before diving into the actual solution.
 
-<!-- For the blog: This post is heavy on code examples and the full source code is available on [GitHub][repo]. -->
-
 ##### Table of Contents  
 - [The problem with `PUT` and the need for `PATCH`](#the-problem-with-put-and-the-need-for-patch)  
 - [Describing how the resource will be modified](#describing-how-the-resource-will-be-modified)
@@ -40,7 +38,7 @@ Consider, for example, we are creating an API to manage contacts. On the server,
 }
 ```
 
-Let's sayd that John has been promoted to senior engineer and we want to keep our contact list updated. We could modify this resource using a `PUT` request, as shown below:
+Let's say that John has been promoted to senior engineer and we want to keep our contact list updated. We could modify this resource using a `PUT` request, as shown below:
 
 ```http
 PUT /contacts/1 HTTP/1.1
@@ -413,10 +411,10 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Apply the patch
-    Contact patched = patch(patchDocument, contact, Contact.class);
+    Contact contactPatched = patch(patchDocument, contact, Contact.class);
     
     // Persist the changes
-    contactService.updateContact(patched);
+    contactService.updateContact(contactPatched);
 
     // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
@@ -434,10 +432,10 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Apply the patch
-    Contact patched = mergePatch(mergePatchDocument, contact, Contact.class);
+    Contact contactPatched = mergePatch(mergePatchDocument, contact, Contact.class);
     
     // Persist the changes
-    contactService.updateContact(patched);
+    contactService.updateContact(contactPatched);
 
     // Return 204 to indicate the request has succeeded
     return ResponseEntity.noContent().build();
@@ -470,16 +468,16 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
     JsonValue patched = applyPatch(patch, target);
 
     // Convert the JSON document to a Java bean
-    T patchedBean = mapper.convertValue(patched, beanClass);
+    T beanPatched = mapper.convertValue(patched, beanClass);
 
     // Validate the Java bean and throw an excetion if any constraint has been violated
-    Set<ConstraintViolation<T>> violations = validator.validate(patchedBean);
+    Set<ConstraintViolation<T>> violations = validator.validate(beanPatched);
     if (!violations.isEmpty()) {
         throw new ConstraintViolationException(violations);
     }
 
     // Return the patched bean
-    return patchedBean;
+    return beanPatched;
 }
 ```
 
@@ -516,9 +514,9 @@ In this example, the domain model class is called `Contact` and the model class 
 @Mapper(componentModel = "spring")
 public interface ContactMapper {
 
-    ContactResourceInput asInput(Contact contact);
+    ContactResourceInput asContactResourceInput(Contact contact);
 
-    void update(ContactResourceInput resourceInput, @MappingTarget Contact contact);
+    void update(ContactResourceInput contactResource, @MappingTarget Contact contact);
     
     ...
 }
@@ -537,13 +535,13 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
     Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Map the domain model to an API resource model
-    ContactResourceInput resourceInput = contactMapper.asInput(contact);
+    ContactResourceInput contactResource = contactMapper.asContactResourceInput(contact);
     
     // Apply the patch to the API resource model
-    ContactResourceInput patched = patch(patchDocument, resourceInput, ContactResourceInput.class);
+    ContactResourceInput contactResourcePatched = patch(patchDocument, contactResource, ContactResourceInput.class);
 
      // Update the domain model with the details from the API resource model
-    contactMapper.update(patched, contact);
+    contactMapper.update(contactResourcePatched, contact);
     
     // Persist the changes
     contactService.updateContact(contact);
@@ -558,13 +556,13 @@ And, for comparision purposes, here's a controller method for handling `PUT` req
 ```java
 @PutMapping(path = "/{id}", consumes = "application/json")
 public ResponseEntity<Void> updateContact(@PathVariable Long id,
-                                          @RequestBody @Valid ContactResourceInput resourceInput) {
+                                          @RequestBody @Valid ContactResourceInput contactResource) {
 
     // Find the domain model that will be updated
     Contact contact = contactService.findContact(id).orElseThrow(ResourceNotFoundException::new);
     
     // Update the domain model with the details from the API resource model
-    contactMapper.update(resourceInput, contact);
+    contactMapper.update(contactResource, contact);
     
     // Persist the changes
     contactService.updateContact(contact);
@@ -644,5 +642,4 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
   [rfc7396]: https://tools.ietf.org/html/rfc7396
   
-  [repo]: https://github.com/cassiomolin/patch-example
-  [repo.postman]: https://github.com/cassiomolin/patch-example/tree/master/misc/postman
+  [repo.postman]: https://github.com/cassiomolin/http-patch-spring/tree/master/misc/postman
