@@ -71,7 +71,7 @@ Let's have a look on how the `PUT` HTTP method is defined in the [RFC 7231][rfc7
 
 So, as per definition, the `PUT` method is meant to be used for:
 
-- _Creating_ resources <sup name="a1">[1](#f1)</sup>
+- _Creating_ resources <sup name="a1">[[1]](#f1)</sup>
 - _Replacing_ the state of a given resource
 
 The key here is: the `PUT` payload must be a _new representation of the resource_. Hence it's not meant for performing _partial modifications_ to resources at all. To fill this gap, the `PATCH` method was created and it is currently defined in the [RFC 5789][rfc5789]:
@@ -500,7 +500,7 @@ public <T> T patch(JsonPatch patch, T targetBean, Class<T> beanClass) {
 
 ## Bonus: Decoupling the domain model from the API model
 
-The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model.<sup name="a2">[2](#f2)</sup> 
+The models that represent the _domain_ of our application and the models that represent the _data handled by our API_ are (or at least should be) _different concerns_ and should be _decoupled_ from each other. We don't want to break our API clients when we add, remove or rename a field from the application domain model.<sup name="a2">[[2]](#f2)</sup> 
 
 While our service layer operates over the domain/persistence models, our API controllers should operate over a different set of models. As our domain/persistence models evolve to support new business requirements, for example, we may want to create new versions of the API models to support these changes. We also may want to deprecate the old versions of our API as new versions are released. And it's perfectly possible to achieve when the things are _decoupled_.
 
