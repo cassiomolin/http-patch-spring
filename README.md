@@ -584,9 +584,9 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
 
 ##### Footnotes
 
-<b id="f1">1.</b> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this. [↩](#a1)
+<b id="f1">[1]</b> You may not want to support `PUT` for creating resources if you rely on the server to generate identifiers for your resources. See my [answer][so.56241060] on Stack Overflow for details on this. [↩](#a1)
 
-<b id="f2">2.</b> I also have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow. [↩](#a2)
+<b id="f2">[2]</b> I also have described the benefits of this approach in this [answer][so.36175349] on Stack Overflow. [↩](#a2)
 
   
   [so.56241060]: https://stackoverflow.com/a/56241060/1426227
