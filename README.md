@@ -11,7 +11,7 @@ As I have seen lots of misunderstanding on how `PATCH` works, I aim to clarify i
   - [JSON Merge Patch](#json-merge-patch)
 - [JSON-P: Java API for JSON Processing](#json-p-java-api-for-json-processing)
 - [Parsing the request payload](#parsing-the-request-payload)
-- [Creating the controller endpoints](#creating-the-controller-endpoints)
+- [Creating the controller methods](#creating-the-controller-methods)
 - [Applying the patch](#applying-the-patch)
 - [Validating the patch](#validating-the-patch)
 - [Bonus: Decoupling the domain model from the API model](#bonus-decoupling-the-domain-model-from-the-api-model)
@@ -308,7 +308,7 @@ public class JsonMergePatchHttpMessageConverter extends AbstractHttpMessageConve
 }
 ```
 
-## Creating the controller endpoints
+## Creating the controller methods
 
 With the HTTP message converters in place, we can receive [`JsonPatch`][javax.json.JsonPatch] and [`JsonMergePatch`][javax.json.JsonMergePatch] as method arguments in our controller methods, annotated with [`@RequestBody`][org.springframework.web.bind.annotation.RequestBody]:
 
