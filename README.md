@@ -1,6 +1,6 @@
 # Using HTTP `PATCH` in Spring
 
-This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring. I also have put together a [Postman collection][repo.postman] so you can play around with the API.
+This project demonstrates an approach to support HTTP `PATCH` with _JSON Patch_ and _JSON Merge Patch_ for performing partial modifications to resources in Spring, as described in my [blog][blog.post]. I also have put together a [Postman collection][repo.postman] so you can play around with the API.
 
 As I have seen lots of misunderstanding on how `PATCH` works, I aim to clarify its usage before diving into the actual solution.
 
@@ -645,3 +645,4 @@ public ResponseEntity<Void> updateContact(@PathVariable Long id,
   [rfc7396]: https://tools.ietf.org/html/rfc7396
   
   [repo.postman]: https://github.com/cassiomolin/http-patch-spring/tree/master/misc/postman
+  [blog.post]:  https://cassiomolin.com/using-http-patch-in-spring/
